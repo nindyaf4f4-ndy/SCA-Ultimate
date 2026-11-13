@@ -1,0 +1,1673 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STIFIn Ultimate - Enterprise Analytics Suite</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        stifin: {
+                            sensing: '#ef4444',
+                            thinking: '#64748b',
+                            intuiting: '#3b82f6',
+                            feeling: '#22c55e',
+                            insting: '#eab308',
+                            dark: '#0f172a',
+                            card: '#1e293b',
+                            border: '#334155'
+                        }
+                    },
+                    animation: {
+                        'shake': 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
+                        'fade-in': 'fadeIn 0.5s ease-out forwards',
+                    },
+                    keyframes: {
+                        shake: {
+                            '10%, 90%': { transform: 'translate3d(-1px, 0, 0)' },
+                            '20%, 80%': { transform: 'translate3d(2px, 0, 0)' },
+                            '30%, 50%, 70%': { transform: 'translate3d(-4px, 0, 0)' },
+                            '40%, 60%': { transform: 'translate3d(4px, 0, 0)' }
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #0f172a; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+        }
+        .glow-border:focus-within { box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4); }
+        
+        /* Sticky Note Card Styles */
+        .sticky-note {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+        .sticky-note:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Print Landscape Styles */
+        @media print {
+            @page { size: landscape; margin: 8mm; }
+            body { background-color: #ffffff !important; color: #000000 !important; }
+            .no-print { display: none !important; }
+            .glass-panel { background: #ffffff !important; border: 1px solid #cbd5e1 !important; color: #000000 !important; box-shadow: none !important; }
+            .print-text-dark { color: #0f172a !important; }
+            .print-border { border-color: #94a3b8 !important; }
+            .pdf-container { width: 100% !important; max-width: 100% !important; }
+            .pdf-grid-2 { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 1rem !important; }
+            .pdf-card { page-break-inside: avoid; }
+        }
+    </style>
+
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body class="antialiased min-h-screen selection:bg-blue-500 selection:text-white">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // SVG Icons Component wrapper for clean rendering without external library dependency issues
+        const Icon = ({ name, size = 20, className = '' }) => {
+            const icons = {
+                Lock: <path d="M19 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2zm-7-7a4 4 0 0 0-4 4v3h8V8a4 4 0 0 0-4-4z" />,
+                Eye: <><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></>,
+                EyeOff: <><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></>,
+                User: <><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></>,
+                LogOut: <><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></>,
+                Brain: <><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-2.04" /><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-2.04" /></>,
+                BarChart3: <><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></>,
+                ChevronDown: <polyline points="6 9 12 15 18 9" />,
+                Printer: <><polyline points="6 9 6 2 18 2 18 9" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><rect x="6" y="14" width="12" height="8" /></>,
+                Activity: <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />,
+                Cpu: <><rect x="4" y="4" width="16" height="16" rx="2" ry="2" /><rect x="9" y="9" width="6" height="6" /><line x1="9" y1="1" x2="9" y2="4" /><line x1="15" y1="1" x2="15" y2="4" /><line x1="9" y1="20" x2="9" y2="23" /><line x1="15" y1="20" x2="15" y2="23" /><line x1="20" y1="9" x2="23" y2="9" /><line x1="20" y1="15" x2="23" y2="15" /><line x1="1" y1="9" x2="4" y2="9" /><line x1="1" y1="15" x2="4" y2="15" /></>,
+                Compass: <><circle cx="12" cy="12" r="10" /><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" /></>,
+                Globe: <><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></>,
+                GraduationCap: <><path d="M22 10v6M2 10l10-5 10 5-10 5z" /><path d="M6 12v5c3 3 9 3 12 0v-5" /></>,
+                PieChart: <><path d="M21.21 15.89A10 10 0 1 1 8 2.83" /><path d="M22 12A10 10 0 0 0 12 2v10z" /></>,
+                Coins: <><circle cx="8" cy="8" r="6" /><path d="M18 8a6 6 0 0 1-6 6" /><path d="M12 18a6 6 0 0 0 6-6" /></>,
+                Briefcase: <><rect x="2" y="7" width="20" height="14" rx="2" ry="2" /><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" /></>,
+                Users: <><path d="M17 21v-2a4 4 0 0 0-3-3.87" /><path d="M9 21v-2a4 4 0 0 1 3-3.87" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></>,
+                HeartPulse: <><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /><path d="M12 5v14" /><path d="M5 11h14" /></>,
+                Sparkles: <><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" /></>
+            };
+
+            return (
+                <svg
+                    width={size}
+                    height={size}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className={`inline-block ${className}`}
+                >
+                    {icons[name] || null}
+                </svg>
+            );
+        };
+
+        const StifinLogo = ({ size = 40, showText = true, className = "" }) => {
+            return (
+                <div className={`flex items-center gap-3 ${className}`}>
+                    <svg width={size} height={size} viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0 filter drop-shadow">
+                        <path d="M 50 40 A 82 82 0 0 1 110 20" stroke="#22c55e" strokeWidth="16" strokeLinecap="round" />
+                        <path d="M 125 22 A 82 82 0 0 1 180 75" stroke="#eab308" strokeWidth="16" strokeLinecap="round" />
+                        <path d="M 180 120 A 82 82 0 0 1 110 180" stroke="#ef4444" strokeWidth="16" strokeLinecap="round" />
+                        <path d="M 92 182 A 82 82 0 0 1 35 150" stroke="#1e293b" strokeWidth="16" strokeLinecap="round" />
+                        <path d="M 25 135 A 82 82 0 0 1 38 55" stroke="#3b82f6" strokeWidth="16" strokeLinecap="round" />
+                        <circle cx="128" cy="52" r="15" fill="#14b8a6" />
+                        <path d="M 75 12 C 60 40, 70 80, 115 110 C 135 122, 125 155, 105 180 C 120 160, 140 125, 118 100 C 85 65, 80 30, 75 12 Z" fill="#06b6d4" />
+                        <path d="M 38 185 C 50 140, 90 90, 170 80 C 160 90, 100 100, 58 145 C 48 156, 42 172, 38 185 Z" fill="#22c55e" />
+                    </svg>
+                    {showText && (
+                        <div className="flex flex-col justify-center leading-tight">
+                            <span className="text-[10px] font-black tracking-[0.3em] uppercase text-slate-500">S T I F I n</span>
+                            <span className="text-xs font-extrabold tracking-widest uppercase text-slate-900 print-text-dark">CHARACTER</span>
+                            <span className="text-[11px] font-bold tracking-wider lowercase text-blue-600">academy</span>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const STIFIn_DATA = {
+            bloodTypes: {
+                'O': { desc: 'Cenderung terdorong/merespon awal secara spontan layaknya orang berkarakter Feeling (Suka menolong, empati).', type: 'Feeling' },
+                'A': { desc: 'Cenderung terdorong/merespon awal secara spontan layaknya orang berkarakter Thinking (Logis, teratur).', type: 'Thinking' },
+                'B': { desc: 'Cenderung terdorong/merespon awal secara spontan layaknya orang berkarakter Intuiting (Kreatif, konseptual).', type: 'Intuiting' },
+                'AB': { desc: 'Cenderung terdorong/merespon awal secara spontan layaknya orang berkarakter Sensing (Praktis, realistis).', type: 'Sensing' }
+            },
+            kecerdasan5W: {
+                'Sensing': {
+                    w: 'What',
+                    otak: 'Limbik Kiri',
+                    karakterUtama: 'Berbasis pada fakta, data, dan realita nyata (indrawi).',
+                    ciriKhas: 'Menyukai hal-hal praktis, memiliki memori yang kuat, fokus pada masa kini, dan cenderung atletis atau memiliki stamina fisik yang baik.'
+                },
+                'Thinking': {
+                    w: 'Who / Why',
+                    otak: 'Neokorteks Kiri',
+                    karakterUtama: 'Berbasis pada logika, analisis, dan struktur.',
+                    ciriKhas: 'Objektif, mandiri, pandai mengorganisasi, fokus pada sebab-akibat, dan cenderung kritis dalam mengambil keputusan.'
+                },
+                'Intuiting': {
+                    w: 'Where / When',
+                    otak: 'Neokorteks Kanan',
+                    karakterUtama: 'Berbasis pada imajinasi, kreativitas, dan visi jangka panjang.',
+                    ciriKhas: 'Menyukai konsep abstrak, inovatif, berfokus pada masa depan, dan senang membuat strategi besar daripada detail teknis.'
+                },
+                'Feeling': {
+                    w: 'Whom',
+                    otak: 'Limbik Kanan',
+                    karakterUtama: 'Berbasis pada emosi, hubungan antarmanusia (hubungan sosial), dan empati.',
+                    ciriKhas: 'Komunikatif, pandai memimpin orang lain, sangat mengandalkan perasaan, dan sensitif terhadap keharmonisan lingkungan.'
+                },
+                'Insting': {
+                    w: 'How',
+                    otak: 'Otak Tengah (Midbrain)',
+                    karakterUtama: 'Berbasis pada naluri, kecepatan respons, dan spiritualitas.',
+                    ciriKhas: 'Berjiwa generalis (serba bisa), cinta damai, respons refleks yang cepat, tulus membantu, dan adaptif dalam berbagai situasi.'
+                }
+            },
+            personalities: {
+                'Si': {
+                    code: 'Si', name: 'Sensing Introvert', color: 'stifin-sensing', hex: '#ef4444',
+                    mkGroup: 'Sensing',
+                    os: 'sistem operasi otak Anda dominan pada Limbik Kiri lapisan Putih (Dalam)',
+                    quotient: 'MQ (Memory Quotient)',
+                    essence: 'Anda dilahirkan dengan kecerdasan Sensing Introvert (Si) yang bersumber dari belahan sistem limbik kiri pada lapisan putih (dalam). Secara genetis, Anda adalah seorang \'Player\' atau eksekutor tangguh yang memproses informasi secara konkrit melalui panca indera.',
+                    drive: 'Chemistry alamiah Anda adalah mengejar Harta dan kepastian materi. Kapan pun ada peluang nyata di depan mata, dorongan dari dalam diri Anda akan langsung merespons dengan determinasi.',
+                    path: 'Kunci sukses Anda adalah dengan terus mengasah \'muscle memory\' melalui pengalaman dan repetisi. Belajarlah dengan cara merekam dan mempraktekkan langsung.',
+                    driveDetails: { drive: 'Introvert (i)', stimuli: 'Saraf Dari Dalam', falsafah: 'Diancam (Anti-Neraka)', motivasi: 'Ditantang' },
+                    finansial: { tabiat: 'Hemat (Memeras Keringat)', kemistri: 'Mengejar Harta (No Pain No Gain)', brand: 'Volume / Skala (Contoh: Tung Desem Waringin)' },
+                    peran: { utama: 'Player / Pemain', kelebihan: 'Efisien (Terlatih Rincian)', klu: 'Mencari Panggung (Menambah Jam Terbang)' },
+                    belajarDeep: { cara: 'Merekam vocabulary, peraga, mengulang sambil bergerak/menulis', pemicu: 'Perlu teman / penantang belajar' },
+                    topo: { scanner: 'Active', os: 'Limbik Kiri', lapisan: 'Putih (Dalam)', cuaca: 'Kering', cairan: 'Empedu Kuning (Koleris)', angin: 'Utara' },
+                    belajar: { 
+                        metode: 'Merekam vocabulary, peraga, mengulang-ulang (repetisi) materi sambil bergerak/menulis', 
+                        peran: 'Player (Eksekutor Praktis)', 
+                        panggung: 'Area teknis, operasional, & praktik lapangan',
+                        kebiasaan: 'Belajar dengan menyalin tulisan / merangkum fisik',
+                        media: 'Peraga nyata, flashcard, soal-soal latihan'
+                    },
+                    psiko: { traits: [{name: 'Persistent', val: 95}, {name: 'Detailed', val: 86}, {name: 'Discipline', val: 72}], disc: 'Dominant (D)' },
+                    motivasi: { kemistri: 'Harta', luang: 'Hemat', harapan: 'Yielding (Imbal Hasil)', keywords: ['Mengingat', 'Otot', 'Rajin', 'Tergerak'], profesiContoh: 'Pedagang' },
+                    karir: { utama: 'Keuangan, Perdagangan, Transportasi, Bahasa, Olahraga', lainnya: 'Ekonom, Atlit, Tentara, Bisnis Perhotelan, Sejarawan, Bankir, Pertanahan, Dokter, Jurnalis, Keartisan, Manufacturing, Pilot, Pramugari, Model, Aktor/Aktris, Salesman, Perkebunan, Pertanian, Peternakan, Administrasi, Sekretaris, Pustakawan, Operator, Pegawai/Staf, Penyanyi, Pekerja Pabrik, Security, Pelukis naturalis, Fotografer, Cameramen, Presenter, Penari, Pekerja lapangan dll.' },
+                    sosial: { support: 'Thinking (T)', didukung: 'Feeling (F)', conquer: 'Insting (In)', ditaklukkan: 'Intuiting (I)' },
+                    fisik: { konstitusi: 'Atletis Bongsor', otot: 'Merah kasar, tenaga kuat', kalibrasi: 'Berkeringat (Aktivitas fisik)' },
+                    perilaku8: {
+                        os: 'Berada di Limbik Kiri di Lapisan Putih',
+                        kecerdasan: 'Memory Quotient',
+                        peranan: 'Peran utama sebagai Player',
+                        kelebihan: 'Kelebihannya Efisiensi ( O/i )',
+                        target: 'Connection ( Hubungan )',
+                        harapan: 'Yielding ( Panen hasil kerja )',
+                        brand: 'Merek pada Scala Volume',
+                        tabiatUang: 'Terhadap uang Hemat'
+                    },
+                    gambaranDasar: { kalibrasi: 'Bergerak, Main', tipologiFisik: 'Atletis', organPenyakit: 'Lambung & Limfa' },
+                    traitsList: [
+                        { label: 'Persistent', subtitle: 'gigih menjalani', desc: 'Stabil bekerja, Tahan banting, pantang menyerah' },
+                        { label: 'Detailed', subtitle: 'terperinci', desc: 'Berurutan, memperinci, cermat' },
+                        { label: 'Discipline', subtitle: 'disiplin', desc: 'Tepat waktu, taat peraturan, tertib' },
+                        { label: 'Encyclopedic', subtitle: 'seperti kamus', desc: 'Merekam semua, mengingat kuat, menyimpan yang lengkap' },
+                        { label: 'Workaholic', subtitle: 'kerja keras', desc: 'Mendapatkan hasil maksimal, menambah jam kerja (lembur), menambah kesibukan' }
+                    ]
+                },
+                'Se': {
+                    code: 'Se', name: 'Sensing Extrovert', color: 'stifin-sensing', hex: '#ef4444',
+                    mkGroup: 'Sensing',
+                    os: 'sistem operasi otak Anda dominan pada Limbik Kiri lapisan Abu-abu (Luar)',
+                    quotient: 'PQ (Physical Quotient)',
+                    essence: 'Anda dilahirkan dengan kecerdasan Sensing Extrovert (Se). Anda adalah seorang \'Garda Depan\' yang energik, mengandalkan panca indera dan kelincahan fisik. Anda tampil mempesona dan pragmatis dalam mengambil peluang.',
+                    drive: 'Chemistry alamiah Anda adalah mengejar Harta melalui koneksi dan interaksi. Anda termotivasi oleh insentif yang nyata dan lingkungan yang dinamis.',
+                    path: 'Kunci sukses Anda adalah dengan memanfaatkan kelincahan fisik dan kemampuan diplomasi. Temukan ladang proyek yang terus berputar.',
+                    driveDetails: { drive: 'Extrovert (e)', stimuli: 'Rangsangan Dari Luar', falsafah: 'Iming-iming (Cari Surga)', motivasi: 'Difasilitasi' },
+                    finansial: { tabiat: 'Pemboros (Mencari Kenikmatan & Mentraktir)', kemistri: 'Dikejar Harta (Suka Mentraktir & Cari Proyek)', brand: 'Personal Guarantee (Contoh: Chairul Tanjung)' },
+                    peran: { utama: 'Garda Depan / Frontliner', kelebihan: 'Menemukan Momentum (Menyenangkan Orang)', klu: 'Temukan Ladang (Proyek Bermargin)' },
+                    belajarDeep: { cara: 'Menandai bacaan, visual rangsangan, belajar sambil bermain', pemicu: 'Diberi iming-iming daya tarik konkrit' },
+                    topo: { scanner: 'Active', os: 'Limbik Kiri', lapisan: 'Abu-abu (Luar)', cuaca: 'Hangat', cairan: 'Empedu Kuning (Koleris)', angin: 'Timur Laut' },
+                    belajar: { 
+                        metode: 'Menandai bacaan (highlight), rangsangan visual, belajar di luar ruangan sambil bermain/bergerak', 
+                        peran: 'Frontliner / Garda Depan (Praktisi Lapangan)', 
+                        panggung: 'Area interaksi publik & simulasi langsung',
+                        kebiasaan: 'Belajar interaktif dengan banyak alat bantu visual',
+                        media: 'Stabilo warna-warni, gambar konkrit, papan permainan'
+                    },
+                    psiko: { traits: [{name: 'Energetic', val: 90}, {name: 'Pragmatic', val: 85}, {name: 'Sociable', val: 80}], disc: 'Influence (I)' },
+                    motivasi: { kemistri: 'Harta', luang: 'Pemboros', harapan: 'Generating (Menghasilkan)', keywords: ['Mengingat', 'Otot', 'Rajin', 'Tercetak'], profesiContoh: 'Aktor / Salesman' },
+                    karir: { utama: 'Hiburan, Sales, Pariwisata, Jasa, Hospitality, Perdagangan', lainnya: 'Ahli Keuangan, Ahli Bahasa, Bisnis Transportasi, Pedagang, Entertainer, Bankir, Pertanahan, Dokter, Jurnalis, Keartisan, Manufacturing, Pilot, Pramugari, Model, Aktor/Aktris, Salesman, Perkebunan, Pertanian, Peternakan, Administrasi, Sekretaris, Pustakawan, Operator, Pegawai/Staf, Penyanyi, Pekerja Pabrik, Security, Pelukis naturalis, Fotografer, Cameramen, Presenter, Penari, Pekerja lapangan dll.' },
+                    sosial: { support: 'Thinking (T)', didukung: 'Feeling (F)', conquer: 'Insting (In)', ditaklukkan: 'Intuiting (I)' },
+                    fisik: { konstitusi: 'Atletis Mungil', otot: 'Merah halus, kelincahan tinggi', kalibrasi: 'Bersenang-senang / Liburan' },
+                    perilaku8: {
+                        os: 'Berada di Limbik Kiri di Lapisan Kelabu',
+                        kecerdasan: 'Physical Quotient',
+                        peranan: 'Peran utama Frontliner',
+                        kelebihan: 'Momentum / Kesempatan seketika',
+                        target: 'Opportunity ( Peluang )',
+                        harapan: 'Generating ( Menghasilkan Laba )',
+                        brand: 'Merek pada Jaminan Dirinya',
+                        tabiatUang: 'Terhadap uang Boros'
+                    },
+                    gambaranDasar: { kalibrasi: 'Bergerak, Main', tipologiFisik: 'Atletis', organPenyakit: 'Lambung & Limfa' },
+                    traitsList: [
+                        { label: 'Momentum', subtitle: 'tanggap peluang', desc: 'Sangat sigap menangkap momen & peluang seketika di depan mata' },
+                        { label: 'Pragmatic', subtitle: 'pragmatis', desc: 'Berorientasi pada hasil nyata yang efisien dan langsung berdampak' },
+                        { label: 'Sociable', subtitle: 'mudah bergaul', desc: 'Luwes berinteraksi, menyenangkan orang lain, dan berjiwa sosial tinggi' },
+                        { label: 'Action-Oriented', subtitle: 'eksekusi cepat', desc: 'Lebih mengutamakan tindakan fisik daripada berteori lama' },
+                        { label: 'Adaptable', subtitle: 'fleksibel lapangan', desc: 'Mudah menyesuaikan diri dengan situasi lapangan yang dinamis' }
+                    ]
+                },
+                'Ti': {
+                    code: 'Ti', name: 'Thinking Introvert', color: 'stifin-thinking', hex: '#64748b',
+                    mkGroup: 'Thinking',
+                    os: 'sistem operasi otak Anda dominan pada Neokorteks Kiri lapisan Putih (Dalam)',
+                    quotient: 'TQ (Technical Quotient)',
+                    essence: 'Anda dilahirkan dengan kecerdasan Thinking Introvert (Ti) di belahan otak rasional. Anda adalah seorang \'Expert\' yang memiliki ketajaman analitis mendalam, mandiri, dan berorientasi pada data.',
+                    drive: 'Chemistry alamiah Anda adalah mengejar Tahta atau pengakuan atas kepakaran Anda. Anda didorong oleh keinginan untuk mengetahui cara kerja segala sesuatu hingga ke akarnya.',
+                    path: 'Kunci sukses Anda adalah dengan menancapkan tiang spesialisasi. Jadilah yang terbaik di satu bidang spesifik. Belajarlah dengan memahami kausalitas.',
+                    driveDetails: { drive: 'Introvert (i)', stimuli: 'Saraf Dari Dalam', falsafah: 'Diancam (Anti-Neraka)', motivasi: 'Ditantang' },
+                    finansial: { tabiat: 'Mikir Manfaat Pengeluaran', kemistri: 'Mencari Tahta (Membuktikan Kepakaran)', brand: 'Expertise / Keahlian (Contoh: Ciputra)' },
+                    peran: { utama: 'Expert / Pakar', kelebihan: 'Efektif (Terbiasa Menghitung)', klu: 'Mencari Tapak (Spesialisasi Tajam)' },
+                    belajarDeep: { cara: 'Mencari sebab-akibat (kausalitas), skema pelajaran, logika mendalam', pemicu: 'Perlu rekognisi / pengakuan derajat' },
+                    topo: { scanner: 'Active', os: 'Neokorteks Kiri', lapisan: 'Putih (Dalam)', cuaca: 'Dingin', cairan: 'Empedu Hitam (Melankolis)', angin: 'Barat' },
+                    belajar: { 
+                        metode: 'Menganalisis skema, mencari hubungan sebab-akibat (kausalitas), serta kedalaman logika teoritis', 
+                        peran: 'Expert / Pakar (Peneliti Spesialis)', 
+                        panggung: 'Area riset, analisis data, & pengolahan sistem',
+                        kebiasaan: 'Membaca mandiri dalam keheningan total',
+                        media: 'Diagram alur, rumus, buku teks ilmiah, skema logika'
+                    },
+                    psiko: { traits: [{name: 'Analytical', val: 92}, {name: 'Independent', val: 88}, {name: 'Objective', val: 85}], disc: 'Compliance (C)' },
+                    motivasi: { kemistri: 'Tahta', luang: 'Bermanfaat / Investasi', harapan: 'Accuration (Akurat)', keywords: ['Menalar', 'Tulang', 'Mandiri', 'Mendalam'], profesiContoh: 'Perminyakan / Peneliti' },
+                    karir: { utama: 'Riset, Teknologi, Perminyakan, Manufaktur, Konstruksi', lainnya: 'Manager/Eksekutif/Yudikatif, Manufactur, Bisnis Properti, Peternakan, Peneliti, Fabrikan, Perminyakan, Pengeboran, Programer, Dokter, Apoteker, Perawat, Ekonom, Dosen/Guru, Property, Insinyur, Fisikawan, Kimiawan, Konsultan Managemen, Teknokrat, Birokrat, Perpajakan, Produsen, QC, Auditor, Ahli Strategi, Pelatih bola, Pembuat Kebijakan, System Analist, Ahli Rekayasa, Developer, Atlit (Pertandingan)' },
+                    sosial: { support: 'Insting (In)', didukung: 'Sensing (S)', conquer: 'Intuiting (I)', ditaklukkan: 'Feeling (F)' },
+                    fisik: { konstitusi: 'Piknis Tebal', otot: 'Tulang besar & kokoh', kalibrasi: 'Menyendiri / Membaca / Catur' },
+                    perilaku8: {
+                        os: 'Berada di Neo Cortex Kiri di Lapisan Putih',
+                        kecerdasan: 'Technical Quotient',
+                        peranan: 'Expert ( Pakar )',
+                        kelebihan: 'Effective ( Output / Standard )',
+                        target: 'Certainty ( Kepastian )',
+                        harapan: 'Managing ( Pengelolaan )',
+                        brand: 'Merek pada Expertise-nya',
+                        tabiatUang: 'Terhadap uang Berhitung'
+                    },
+                    gambaranDasar: { kalibrasi: 'Kembali ke alam, Wisata', tipologiFisik: 'Piknis', organPenyakit: 'Ginjal' },
+                    traitsList: [
+                        { label: 'Specialist', subtitle: 'ahli dalam bidangnya', desc: 'Mendalami satu bidang, Menekuni kompetensi khusus, Kejelian mikroskopis (melihat hal2 yang sangat detail sekali)' },
+                        { label: 'Independent', subtitle: 'mandiri, tidak tergantung', desc: 'Kerja Mandiri, Swadaya (self support/energi datang dari diri sendiri), Bertumpu pada kemampuan sendiri' },
+                        { label: 'Focus', subtitle: 'konsentrasi pada 1 perkara', desc: 'Penuh konsentrasi, Berpikir mendalam, tidak terganggu/terdistraksi/Tenang' },
+                        { label: 'Prudent', subtitle: 'penuh kehati-hatian', desc: 'Mempertimbangkan dengan hati-hati, Mengantisipasi penyimpangan, Meminimalkan resiko' },
+                        { label: 'Mechanistic', subtitle: 'seperti mesin (tanpa hati)', desc: 'Terstruktur dan sistematis, Sesuai SOP (aturan baku), Bekerja stabil seperti mesin' }
+                    ]
+                },
+                'Te': {
+                    code: 'Te', name: 'Thinking Extrovert', color: 'stifin-thinking', hex: '#64748b',
+                    mkGroup: 'Thinking',
+                    os: 'sistem operasi otak Anda dominan pada Neokorteks Kiri lapisan Abu-abu (Luar)',
+                    quotient: 'LQ (Logical Quotient)',
+                    essence: 'Anda dilahirkan dengan kecerdasan Thinking Extrovert (Te). Anda adalah seorang \'Chief\' atau pengatur sejati yang mahir dalam mengorganisasi sumber daya dan membangun struktur.',
+                    drive: 'Chemistry alamiah Anda adalah mengejar Tahta melalui penguasaan manajerial dan perluasan rentang kendali.',
+                    path: 'Kunci sukses Anda adalah mendelegasikan dan mengontrol. Praktikkan manajerialship Anda secara terstruktur.',
+                    driveDetails: { drive: 'Extrovert (e)', stimuli: 'Rangsangan Dari Luar', falsafah: 'Iming-iming (Cari Surga)', motivasi: 'Difasilitasi' },
+                    finansial: { tabiat: 'Mengakumulasikan Uang (Barang Berharga Rasional)', kemistri: 'Dikejar Tahta (Kharisma Manajerial & Rentang Kendali)', brand: 'Managerialship (Contoh: Tanri Abeng)' },
+                    peran: { utama: 'Chief / Manajer Utama', kelebihan: 'Multiplying (Melipatgandakan / Optimalisasi)', klu: 'Berorganisasi (Praktik Manajerial)' },
+                    belajarDeep: { cara: 'Membuat struktur, memahami garis besar logika sistematis', pemicu: 'Kemenangan beruntun & target terukur' },
+                    topo: { scanner: 'Active', os: 'Neokorteks Kiri', lapisan: 'Abu-abu (Luar)', cuaca: 'Sejuk', cairan: 'Empedu Hitam (Melankolis)', angin: 'Barat Laut' },
+                    belajar: { 
+                        metode: 'Membuat struktur kerangka materi, memahami garis besar logika sistematis, & diskusi/debat rasional', 
+                        peran: 'Chief / Manajer (Pengatur Strategi & Struktur)', 
+                        panggung: 'Area manajerial, struktur organisasi, & birokrasi',
+                        kebiasaan: 'Mengisi daftar target (checklist) & studi kasus terukur',
+                        media: 'Mind-map terstruktur, outline bab, forum diskusi rasional'
+                    },
+                    psiko: { traits: [{name: 'Organized', val: 94}, {name: 'Systematic', val: 89}, {name: 'Assertive', val: 82}], disc: 'Dominant-Compliance' },
+                    motivasi: { kemistri: 'Tahta', luang: 'Akumulasi', harapan: 'Controlling (Pengendalian)', keywords: ['Menalar', 'Tulang', 'Mandiri', 'Meluas'], profesiContoh: 'Tentara / Manajer' },
+                    karir: { utama: 'Birokrasi, Manajemen, Militer, Hukum, Bisnis Skala Besar', lainnya: 'Ristek, IT, Bisnis Pertambangan, Ahli konstruksi, Bisnis Kesehatan, Garmen, Peneliti, Fabrikan, Perminyakan, Pengeboran, Programer, Dokter, Apoteker, Perawat, Ekonom, Manager, Dosen/Guru, Property, Insinyur, Fisikawan, Kimiawan, Konsultan Managemen, Teknokrat, Birokrat, Perpajakan, Produsen, QC, Auditor, Ahli Strategi, Pelatih bola, Pembuat Kebijakan, System Analist, Ahli Rekayasa, Developer, Atlit (Pertandingan)' },
+                    sosial: { support: 'Insting (In)', didukung: 'Sensing (S)', conquer: 'Intuiting (I)', ditaklukkan: 'Feeling (F)' },
+                    fisik: { konstitusi: 'Piknis Tipis', otot: 'Tulang proporsional', kalibrasi: 'Kompetisi logis / Game strategi' },
+                    perilaku8: {
+                        os: 'Berada di Neo Cortex Kiri di Lapisan Kelabu',
+                        kecerdasan: 'Logical Quotient',
+                        peranan: 'Chief ( Komandan )',
+                        kelebihan: 'Multiplying (Pelipatgandaan)',
+                        target: 'Authority ( Wewenang )',
+                        harapan: 'Controlling ( Pengendalian )',
+                        brand: 'Merek pada Proses Manajerialnya',
+                        tabiatUang: 'Terhadap uang Mengumpulkan'
+                    },
+                    gambaranDasar: { kalibrasi: 'Kembali ke alam, Wisata', tipologiFisik: 'Piknis', organPenyakit: 'Ginjal' },
+                    traitsList: [
+                        { label: 'Thoughtful', subtitle: 'kuat mikir', desc: 'Berpikir sistematis (masuk prioritas), Analisis tajam berdasar data, Berpikir terencana' },
+                        { label: 'Competitive', subtitle: 'senang kompetisi', desc: 'Selalu ingin menang, Berusaha memperbaiki diri, Mencari ajang/event kompetisi' },
+                        { label: 'Forceful', subtitle: 'komando kuat', desc: 'Tactical (berpikir taktis), Rentang kendali kuat (mampu memanaje banyak orang/kegiatan/span of control kuat), Tegas memerintah' },
+                        { label: 'Responsible', subtitle: 'tanggung jawab', desc: 'Dapat diandalkan, Siap menanggung resiko, Kerja tuntas' },
+                        { label: 'Justice', subtitle: 'ingin adil', desc: 'Adil memutuskan, Objektif, Mempertimbangkan dengan tepat' }
+                    ]
+                },
+                'Ii': {
+                    code: 'Ii', name: 'Intuiting Introvert', color: 'stifin-intuiting', hex: '#3b82f6',
+                    mkGroup: 'Intuiting',
+                    os: 'sistem operasi otak Anda dominan pada Neokorteks Kanan lapisan Putih (Dalam)',
+                    quotient: 'CQ (Creativity Quotient)',
+                    essence: 'Anda dilahirkan dengan kecerdasan Intuiting Introvert (Ii). Anda adalah \'Kreator\' murni yang mengandalkan intuisi dan imajinasi spasial. Anda memandang jauh ke depan.',
+                    drive: 'Chemistry alamiah Anda adalah mencipta "Kata" atau konsep/ide. Anda termotivasi oleh hasrat untuk merealisasikan visi batin Anda menjadi mahakarya.',
+                    path: 'Kunci sukses Anda adalah mencari inkubator untuk memelihara ide Anda hingga matang. Belajarlah dengan menangkap konsep makro.',
+                    driveDetails: { drive: 'Introvert (i)', stimuli: 'Saraf Dari Dalam', falsafah: 'Diancam (Anti-Neraka)', motivasi: 'Ditantang' },
+                    finansial: { tabiat: 'Mencari Kepuasan Ide (Seni untuk Seni)', kemistri: 'Menerbangkan Kata (Kepuasan Ide Murni)', brand: 'Quality / Kualitas Kerja (Contoh: Sri Mulyani)' },
+                    peran: { utama: 'Inisiator / Kreator Murni', kelebihan: 'Invention (Ciptaan Murni / Ide Unik)', klu: 'Mencari Program / Inkubasi (Inkubasi Ciptaan)' },
+                    belajarDeep: { cara: 'Menangkap konsep makro, visualisasi spasial, metafora', pemicu: 'Ditantang (merasa bisa berbuat lebih)' },
+                    topo: { scanner: 'Active', os: 'Neokorteks Kanan', lapisan: 'Putih (Dalam)', cuaca: 'Sejuk', cairan: 'Lendir (Flegmatis)', angin: 'Barat Daya' },
+                    belajar: { 
+                        metode: 'Menggunakan visualisasi spasial, menghubungkan pola abstrak, metafora, & analogi ide murni', 
+                        peran: 'Inisiator / Kreator (Penggagas Karya Unik)', 
+                        panggung: 'Area kreatif murni, laboratorium inovasi, & konseptual',
+                        kebiasaan: 'Melamun/membayangkan konsep sebelum menuangkannya',
+                        media: 'Coretan ide, simbol abstrak, gambar 3D, ilustrasi metafora'
+                    },
+                    psiko: { traits: [{name: 'Imaginative', val: 95}, {name: 'Perfectionist', val: 88}, {name: 'Visionary', val: 85}], disc: 'Compliance (C)' },
+                    motivasi: { kemistri: 'Kata (Ide)', luang: 'Berkreasi', harapan: 'Creating (Kreasi)', keywords: ['Mengarang', 'Perut Panjang', 'Perubahan', 'Murni'], profesiContoh: 'Sutradara / Penemu' },
+                    karir: { utama: 'Periklanan, Desain, Arsitektur, Sastra, R&D Kreatif', lainnya: 'Pengusaha/Investor, Bisnis Pendidikan/Pelatihan, Penulis Sastra, Cinematografis, Detektif, Seniman, Pengusaha, Peneliti Sain Murni, Fisikawan Quantum, Pencipta Lagu, Reengineering, Proyeksi, Peramal Bisnis, Pemain Saham, Investor, Filosof, Pakar Pembelajaran/Pemodul, Even Organizer (EO) Produsen, Desainer, Ahli Kreatif Berbagai Bidang, Arsitek, Sutradara, Pelukis Abstrak, Pesulap, Peramal, Pialang Saham, Atlit (Sprinter/Pertandingan), Pelatih Olahraga Pertandingan, Penyembuh, Cenayang dll.' },
+                    sosial: { support: 'Feeling (F)', didukung: 'Insting (In)', conquer: 'Sensing (S)', ditaklukkan: 'Thinking (T)' },
+                    fisik: { konstitusi: 'Astenis Tebal', otot: 'Ramping padat', kalibrasi: 'Menonton film / Berimajinasi / Hening' },
+                    perilaku8: {
+                        os: 'Berada di Neo Cortex Kanan di Lapisan Putih',
+                        kecerdasan: 'Creativity Quotient',
+                        peranan: 'Initiator ( Penggagas )',
+                        kelebihan: 'Invention (Penemuan)',
+                        target: 'Significance ( Perubahan nyata )',
+                        harapan: 'Creating ( Penciptaan )',
+                        brand: 'Merek pada kualitas kerjanya',
+                        tabiatUang: 'Terhadap uang Kepuasan'
+                    },
+                    gambaranDasar: { kalibrasi: 'Tidur, Nonton', tipologiFisik: 'Astenis', organPenyakit: 'Liver' },
+                    traitsList: [
+                        { label: 'Learner', subtitle: 'pembelajar', desc: 'Suka belajar, Mengejar ilmu, Curious (ingin serba tahu)' },
+                        { label: 'Assertive', subtitle: 'berani menagih hak', desc: 'Menyampaikan haknya, Berani tidak populer, Berani berpendapat' },
+                        { label: 'Perfectionist', subtitle: 'ingin sempurna', desc: 'Menuntut sempurna (berharap orang lain sempurna), selalu menjadi terbaik, Mengutamakan kualitas' },
+                        { label: 'Invention', subtitle: 'menciptakan ide murni', desc: 'Kreatifitas murni, Eksploratif, Berani bereksperimen' },
+                        { label: 'Optimistic', subtitle: 'yakin berhasil', desc: 'Prasangka baik terhadap diri, Yakin selalu berhasil, Percaya diri tinggi' }
+                    ]
+                },
+                'Ie': {
+                    code: 'Ie', name: 'Intuiting Extrovert', color: 'stifin-intuiting', hex: '#3b82f6',
+                    mkGroup: 'Intuiting',
+                    os: 'sistem operasi otak Anda dominan pada Neokorteks Kanan lapisan Abu-abu (Luar)',
+                    quotient: 'SQ (Spatial Quotient)',
+                    essence: 'Anda dilahirkan dengan kecerdasan Intuiting Extrovert (Ie). Anda adalah \'Pembaharu\' atau pengusaha visioner yang mahir merakit berbagai ide.',
+                    drive: 'Chemistry alamiah Anda adalah "Kata" (Ide) yang dibumikan atau dikomersialkan. Anda termotivasi oleh kebebasan dan perubahan.',
+                    path: 'Kunci sukses Anda adalah berbisnis dan beraliansi. Tangkap tren makro dari ketinggian dan temukan partner eksekusi.',
+                    driveDetails: { drive: 'Extrovert (e)', stimuli: 'Rangsangan Dari Luar', falsafah: 'Iming-iming (Cari Surga)', motivasi: 'Difasilitasi' },
+                    finansial: { tabiat: 'Progresif (Modal Masa Depan)', kemistri: 'Mendaratkan Kata (Dikawinkan dengan Pasar)', brand: 'Margin / Keuntungan (Contoh: Sukanto Tanoto)' },
+                    peran: { utama: 'Pembaharu / Entrepreneur', kelebihan: 'Innovation (Pembaharu / Tren Bisnis)', klu: 'Berbisnis (Memutar Aset & Marjin)' },
+                    belajarDeep: { cara: 'Studi kasus kontekstual, kebebasan eksplorasi ruang & ide', pemicu: 'Jangan dibatasi / Beri ruang gerak' },
+                    topo: { scanner: 'Active', os: 'Neokorteks Kanan', lapisan: 'Abu-abu (Luar)', cuaca: 'Hangat', cairan: 'Lendir (Flegmatis)', angin: 'Selatan' },
+                    belajar: { 
+                        metode: 'Mempelajari studi kasus kontekstual, perakitan gagasan (assembling), & eksplorasi tren masa depan', 
+                        peran: 'Pembaharu / Entrepreneur (Perakit Inovasi Bisnis)', 
+                        panggung: 'Area bisnis disrupsi, riset pasar, & perancangan strategi',
+                        kebiasaan: 'Brainstorming terbuka tanpa batasan kaku',
+                        media: 'Mind-mapping dinamis, tren industri, studi kasus nyata'
+                    },
+                    psiko: { traits: [{name: 'Innovative', val: 93}, {name: 'Adaptable', val: 89}, {name: 'Optimistic', val: 86}], disc: 'Influence-Dominant' },
+                    motivasi: { kemistri: 'Kata (Ide)', luang: 'Eksplorasi', harapan: 'Assembling (Merakit)', keywords: ['Mengarang', 'Perut Panjang', 'Perubahan', 'Rakitan'], profesiContoh: 'Pengusaha' },
+                    karir: { utama: 'Wirausaha, Pemasaran Strategis, Investasi, Developer', lainnya: 'Marketer/Iklan Agency, Lifestyle/Mode, Bisnis Penerbangan, Bisnis Agro-Forestry, Seniman, Pengusaha, Peneliti Sain Murni, Fisikawan Quantum, Pencipta Lagu, Reengineering, Proyeksi, Peramal Bisnis, Pemain Saham, Investor, Filosof, Pakar Pembelajaran/Pemodul, Even Organizer (EO) Produsen, Desainer, Ahli Kreatif Berbagai Bidang, Arsitek, Sutradara, Pelukis Abstrak, Pesulap, Peramal, Pialang Saham, Atlit (Sprinter/Pertandingan), Pelatih Olahraga Pertandingan, Penyembuh, Cenayang dll.' },
+                    sosial: { support: 'Feeling (F)', didukung: 'Insting (In)', conquer: 'Sensing (S)', ditaklukkan: 'Thinking (T)' },
+                    fisik: { konstitusi: 'Astenis Tipis', otot: 'Ramping lentur', kalibrasi: 'Traveling / Mencari inspirasi baru' },
+                    perilaku8: {
+                        os: 'Berada di Neo Cortex Kanan di Lapisan Kelabu',
+                        kecerdasan: 'Spatial Quotient',
+                        peranan: 'Reformer ( Pembaharu )',
+                        kelebihan: 'Inovation (Karya cipta)',
+                        target: 'Quality ( Kualitas )',
+                        harapan: 'Assembling ( Kreativitas Perakitan )',
+                        brand: 'Merek pada Margin Keuntungan',
+                        tabiatUang: 'Terhadap uang Maju'
+                    },
+                    gambaranDasar: { kalibrasi: 'Tidur, Nonton', tipologiFisik: 'Astenis', organPenyakit: 'Liver' },
+                    traitsList: [
+                        { label: 'Inspiring', subtitle: 'menginspirasi', desc: 'Banyak ide, Pandai melihat sisi lain, Hadirkan kebaruan' },
+                        { label: 'Benchmarker', subtitle: 'standar rujukan', desc: 'Menghidupkan standar, Ingin menjadi trendsetter, Quality driven (Terus memperbaiki diri)' },
+                        { label: 'Expressive', subtitle: 'penuh ekspresi', desc: 'Tampil ekspresif, Menghidupkan Bahasa tubuh, Teatrikal' },
+                        { label: 'Innovative', subtitle: 'menciptakan ide yang lebih baik', desc: 'Selalu memberi nilai tambah, Mensintesa, Assembling/kreatifitas rakitan' },
+                        { label: 'Spatial', subtitle: 'kemampuan meruang', desc: 'Kemampuan meruang, Menginvestigasi, Intuition (kemampuan melihat masa depan)' }
+                    ]
+                },
+                'Fi': {
+                    code: 'Fi', name: 'Feeling Introvert', color: 'stifin-feeling', hex: '#22c55e',
+                    mkGroup: 'Feeling',
+                    os: 'sistem operasi otak Anda dominan pada Limbik Kanan lapisan Putih (Dalam)',
+                    quotient: 'EQ (Emotional Quotient)',
+                    essence: 'Anda dilahirkan dengan kecerdasan Feeling Introvert (Fi). Anda adalah \'Leader\' kharismatik yang memimpin dari hati dengan empati mendalam.',
+                    drive: 'Chemistry alamiah Anda adalah Cinta dan pengaruh. Anda termotivasi oleh harmoni dan pengakuan emosional.',
+                    path: 'Kunci sukses Anda adalah mencari platform untuk memperkuat pengaruh kepemimpinan Anda.',
+                    driveDetails: { drive: 'Introvert (i)', stimuli: 'Saraf Dari Dalam', falsafah: 'Diancam (Anti-Neraka)', motivasi: 'Ditantang' },
+                    finansial: { tabiat: 'Nge-bossi (Menyenangkan Pengikut)', kemistri: 'Menjaring Cinta (Cinta Perempuan Tunggal)', brand: 'Leadership / Kepemimpinan (Contoh: Ir. Soekarno)' },
+                    peran: { utama: 'Leader / Pemimpin Kharismatik', kelebihan: 'Popularitas (Pesona & Kharisma)', klu: 'Mencari Platform (Memperkuat Pengaruh)' },
+                    belajarDeep: { cara: 'Mendengarkan (Auditori / Ilmu lewat telinga), ceramah', pemicu: 'Sentuh emosi & jaga mood' },
+                    topo: { scanner: 'Active', os: 'Limbik Kanan', lapisan: 'Putih (Dalam)', cuaca: 'Hangat', cairan: 'Darah (Sanguinis)', angin: 'Tenggara' },
+                    belajar: { 
+                        metode: 'Menyimak rekaman suara (auditori), mendengarkan ceramah/podcast, & perenungan emosional secara hening', 
+                        peran: 'Leader / Pemimpin Kharismatik (Penyentuh Emosi/Batin)', 
+                        panggung: 'Area kepemimpinan, advokasi, & pergerakan sosial',
+                        kebiasaan: 'Mendengarkan penjelasan lisan secara khusyuk',
+                        media: 'Audiobook, podcast, ceramah lisan, cerita inspiratif'
+                    },
+                    psiko: { traits: [{name: 'Empathetic', val: 96}, {name: 'Persuasive', val: 87}, {name: 'Idealistic', val: 84}], disc: 'Steadiness (S)' },
+                    motivasi: { kemistri: 'Cinta', luang: 'Nge-bossi', harapan: 'Leading (Terdepan)', keywords: ['Merasakan', 'Pernafasan', 'Memimpin', 'Memerlukan'], profesiContoh: 'Politisi / Leader' },
+                    karir: { utama: 'Politik, Diplomasi, Hubungan Masyarakat, Advokasi, Agama', lainnya: 'Psikolog, Komunikasi, Diplomat, Humas, Promotor, Investor, Negarawan, Trainer /Public Speaker, Administrasi Negara, Seniman, Budayawan, Hubungan International, Salesman, Inspirator, Motivator, Psikiater, Counselor, Idiolog, Personalia, Lawyer, Birokrat, Aktivis, Atlit Maraton, Dll' },
+                    sosial: { support: 'Sensing (S)', didukung: 'Intuiting (I)', conquer: 'Thinking (T)', ditaklukkan: 'Insting (In)' },
+                    fisik: { konstitusi: 'Displastis Besar', otot: 'Besar / Lebar', kalibrasi: 'Curhat / Hening / Diskusi hati' },
+                    perilaku8: {
+                        os: 'Berada di Limbik Kanan di Lapisan Putih',
+                        kecerdasan: 'Emotional Quotient',
+                        peranan: 'Leader ( Pemimpin )',
+                        kelebihan: 'Popularity (Ketenaran)',
+                        target: 'VISI ( Pandangan Jauh )',
+                        harapan: 'Leading ( Kepemimpinan )',
+                        brand: 'Merek pada Kepemimpinannya',
+                        tabiatUang: 'Terhadap uang sbg. Juragan'
+                    },
+                    gambaranDasar: { kalibrasi: 'Curhat, Bercengkrama', tipologiFisik: 'Displastis', organPenyakit: 'Paru-paru' },
+                    traitsList: [
+                        { label: 'Idealistic', subtitle: 'idealis', desc: 'Hidup dengan filosofi, Visioner, Berpikir besar' },
+                        { label: 'Leader', subtitle: 'memimpin', desc: 'Memimpin dengan hati, Mempunyai charisma, Keteladanan' },
+                        { label: 'Populer', subtitle: 'terkenal', desc: 'Ingin disayangi, Meningkatkan exposure, Mengemas citra' },
+                        { label: 'Reflective', subtitle: 'bercermin diri', desc: 'Mampu bercermin diri, Mendapatkan kenyamanan suasana hati (butuh/kemampuan utk curhat), Menumbuhkan jiwa baru' },
+                        { label: 'Convincing', subtitle: 'meyakinkan', desc: 'Memiliki keyakinan besar, Mempersuasi, Menginduksi/kata-kata yg menyihir' }
+                    ]
+                },
+                'Fe': {
+                    code: 'Fe', name: 'Feeling Extrovert', color: 'stifin-feeling', hex: '#22c55e',
+                    mkGroup: 'Feeling',
+                    os: 'sistem operasi otak Anda dominan pada Limbik Kanan lapisan Abu-abu (Luar)',
+                    quotient: 'Sq (Social Quotient)',
+                    essence: 'Anda dilahirkan dengan kecerdasan Feeling Extrovert (Fe). Anda adalah \'Mentor\' atau fasilitator ulung yang sangat peka terhadap dinamika sosial.',
+                    drive: 'Chemistry alamiah Anda adalah Cinta yang diekspresikan keluar untuk membangun tim yang harmonis.',
+                    path: 'Kunci sukses Anda adalah membangun kader atau tim yang loyal. Jadilah "King Maker".',
+                    driveDetails: { drive: 'Extrovert (e)', stimuli: 'Rangsangan Dari Luar', falsafah: 'Iming-iming (Cari Surga)', motivasi: 'Difasilitasi' },
+                    finansial: { tabiat: 'Instan (Cari Jalan Mudah)', kemistri: 'Menebar Cinta (Ke Mana-mana)', brand: 'Team & Organization (Contoh: Jakob Oetama)' },
+                    peran: { utama: 'Owner / King Maker / Mentor', kelebihan: 'Magnifying (Membesarkan Orang / Kader)', klu: 'Mencari Kader (Mencetak Pemimpin Baru)' },
+                    belajarDeep: { cara: 'Berdiskusi (Interaksi telinga & mulut), role-play', pemicu: 'Beri pujian & apresiasi' },
+                    topo: { scanner: 'Active', os: 'Limbik Kanan', lapisan: 'Abu-abu (Luar)', cuaca: 'Hangat', cairan: 'Darah (Sanguinis)', angin: 'Timur' },
+                    belajar: { 
+                        metode: 'Diskusi kelompok interaktif (telinga & mulut), role-play, serta membutuhkan dorongan apresiasi/pujian', 
+                        peran: 'Mentor / King Maker (Penggembleng & Pemimpin Tim)', 
+                        panggung: 'Area HR, pengembangan komunitas, & pelatihan SDM',
+                        kebiasaan: 'Tanya-jawab interaktif & mengajar balik materi',
+                        media: 'Forum diskusi, simulasi peran (role-play), kerja kelompok'
+                    },
+                    psiko: { traits: [{name: 'Sociable', val: 94}, {name: 'Nurturing', val: 90}, {name: 'Communicative', val: 88}], disc: 'Influence-Steadiness' },
+                    motivasi: { kemistri: 'Cinta', luang: 'Instan', harapan: 'Coaching (Kingmaker)', keywords: ['Merasakan', 'Pernafasan', 'Memimpin', 'Diperlukan'], profesiContoh: 'Public Speaker' },
+                    karir: { utama: 'HRD, Psikologi, Public Relations, Pendidikan, Konseling', lainnya: 'Politisi, Eksekutif, Lawyer, Kesenian , Investor, Negarawan, Trainer /Public Speaker, Administrasi Negara, Seniman, Budayawan, Hubungan International, Salesman, Inspirator, Motivator, Psikiater, Counselor, Idiolog, Personalia, Lawyer, Birokrat, Aktivis, Atlit Maraton, Dll' },
+                    sosial: { support: 'Sensing (S)', didukung: 'Intuiting (I)', conquer: 'Thinking (T)', ditaklukkan: 'Insting (In)' },
+                    fisik: { konstitusi: 'Displastis Kecil', otot: 'Fleksibel', kalibrasi: 'Nongkrong / Silaturahmi' },
+                    perilaku8: {
+                        os: 'Berada di Limbik Kanan di Lapisan Kelabu',
+                        kecerdasan: 'Social Quotient',
+                        peranan: 'Owner ( Pemilik )',
+                        kelebihan: 'Magnifying (Pembesaran)',
+                        target: 'People ( Orang lain )',
+                        harapan: 'Coaching (Penggemblengan)',
+                        brand: 'Merek pada TIM & Organisasinya',
+                        tabiatUang: 'Terhadap uang Ambil Risiko'
+                    },
+                    gambaranDasar: { kalibrasi: 'Curhat, Bercengkrama', tipologiFisik: 'Displastis', organPenyakit: 'Paru-paru' },
+                    traitsList: [
+                        { label: 'Empathy', subtitle: 'berempati', desc: 'Memahami orang lebih dalam, memiliki kepekaan peka, memiliki kepedulian' },
+                        { label: 'Communicative', subtitle: 'komunikatif', desc: 'Komunikatif, Menyentuh hati, Pendengar yang baik' },
+                        { label: 'Social minded', subtitle: 'orientasi sosial', desc: 'Berorientasi social (orang), Toleransi, Bekerjasama' },
+                        { label: 'Affectionate', subtitle: 'penuh sayang', desc: 'Memberi kasih sayang, Penuh perhatian, Berlimpah cinta' },
+                        { label: 'Guiding', subtitle: 'membimbing', desc: 'Membimbing orang, Menaikkan level orang (enable), Memotivasi orang' }
+                    ]
+                },
+                'In': {
+                    code: 'In', name: 'Insting', color: 'stifin-insting', hex: '#eab308',
+                    mkGroup: 'Insting',
+                    os: 'sistem operasi otak Anda dominan pada Otak Tengah (Cerebellum)',
+                    quotient: 'AQ (Altruist Quotient)',
+                    essence: 'Anda dilahirkan dengan kecerdasan Insting (In). Anda adalah \'Partner\' yang serba bisa, spontan, pragmatis, dan memiliki altruisme tinggi.',
+                    drive: 'Chemistry alamiah Anda adalah Bahagia dan kedamaian. Anda termotivasi oleh peran untuk menolong orang lain.',
+                    path: 'Kunci sukses Anda adalah mengambil peran untuk berkontribusi. Anda adalah generalis yang menjembatani semua pihak.',
+                    driveDetails: { drive: 'Tanpa Kemudi (Otomatis / Refleks)', stimuli: 'Spontanitas Lingkungan', falsafah: 'Kedamaian & Netralitas', motivasi: 'Bimbingan Telaten Tanpa Kemarahan' },
+                    finansial: { tabiat: 'Martir (Mendahulukan Orang Lain)', kemistri: 'Selalu Bahagia (Menghindari Ekstrem)', brand: 'Role / Peranan (Contoh: Jusuf Kalla)' },
+                    peran: { utama: 'Partner / Orang Kedua / Peaceseeker', kelebihan: 'Radar Panjang (Sinyal Langit / Serba Bisa)', klu: 'Berperan / Multitasking (Pengabdian)' },
+                    belajarDeep: { cara: 'Merangkum / Resume (Deduktif: kesimpulan ke detail)', pemicu: 'Bimbingan bertahap tanpa kemarahan' },
+                    topo: { scanner: 'Active', os: 'Otak Tengah', lapisan: 'Tidak Ada (Otomatis)', cuaca: 'Netral', cairan: 'Air Tubuh (-)', angin: 'Pusat' },
+                    belajar: { 
+                        metode: 'Penalaran deduktif (dari kesimpulan umum merangkum ke detail), merangkum poin inti, & praktik spontan', 
+                        peran: 'Partner / Peaceseeker (Mitra Multitasking Generalis)', 
+                        panggung: 'Area mediasi, nirlaba, pelayanan, & koordinasi lintas divisi',
+                        kebiasaan: 'Membuat ringkasan poin-poin singkat yang netral',
+                        media: 'Rangkuman/resume singkat, modul kilat, instruksi langsung'
+                    },
+                    psiko: { traits: [{name: 'Spontaneous', val: 92}, {name: 'Altruistic', val: 95}, {name: 'Adaptable', val: 90}], disc: 'Steadiness-Compliance' },
+                    motivasi: { kemistri: 'Bahagia', luang: 'Berkorban', harapan: 'Contributing (Berkontribusi)', keywords: ['Merangkai', 'Reflek', 'Berkorban', 'Otomatis'], profesiContoh: 'Penggiat Nirlaba' },
+                    karir: { utama: 'NGO, Musik/Seni, Pelayanan Masyarakat, Mediation, Spiritual', lainnya: 'Pembalap, Entertainer, Agamawan, Aktivis, Musik, Chef, Jurnalis, Pengetahuan Umum, Performance, Spiritualist, Birokrat, Pelayan Masyarakat, Mediator, Tangan Kanan untuk semua posisi dan semua Industri, Kolumnis, Generalis, Presenter Serba Bisa, Atlit Serba Bisa, dll' },
+                    sosial: { support: 'Intuiting (I)', didukung: 'Thinking (T)', conquer: 'Feeling (F)', ditaklukkan: 'Sensing (S)' },
+                    fisik: { konstitusi: 'Stenis Datar', otot: 'Refleks cepat (Sumsum tulang)', kalibrasi: 'Musik / Suasana damai' },
+                    perilaku8: {
+                        os: 'Berada di Otak Tengah Lapisan tidak ada',
+                        kecerdasan: 'Altruist Quotient',
+                        peranan: 'Partner ( Mitra )',
+                        kelebihan: '3rd Eye (Mata Ketiga)',
+                        target: 'Growth ( Pertumbuhan )',
+                        harapan: 'Contributing (Kontribusi)',
+                        brand: 'Merek pada Tingkat berperannya',
+                        tabiatUang: 'Terhadap uang sbg. Penolong'
+                    },
+                    gambaranDasar: { kalibrasi: 'Silaturahmi', tipologiFisik: 'Stenis', organPenyakit: 'Jantung' },
+                    traitsList: [
+                        { label: 'Generalis', subtitle: 'orientasi menyeluruh', desc: 'Serba bisa, Deduktif: berpikir dari umum ke khusus, Holistic / komperhensive' },
+                        { label: 'Flowing', subtitle: 'mengalir', desc: 'Berjiwa mengalir, Menjalin Hubungan, Mempermudah urusan' },
+                        { label: 'Resourceful', subtitle: 'menjadi sumber daya', desc: 'Menjadi sumber daya pelengkap, (ingin) terlibat, Occupied (kepake) yang dibutuhkan orang' },
+                        { label: 'Instinctive', subtitle: 'naluri tajam', desc: 'Naluri tajam, Responsive, Menangkap insight (hikmah)' },
+                        { label: 'Altruis', subtitle: 'rela berkorban', desc: 'Rela berkorban, Pembuktian kebaikan, Helpful' }
+                    ]
+                }
+            }
+        };
+
+        const App = () => {
+            const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+            const [currentView, setCurrentView] = React.useState('login');
+            const [userData, setUserData] = React.useState(null);
+
+            React.useEffect(() => {
+                const storedAuth = localStorage.getItem('stifin_auth');
+                const storedData = localStorage.getItem('stifin_user_data');
+                
+                if (storedAuth === 'true' && storedData) {
+                    setIsAuthenticated(true);
+                    setUserData(JSON.parse(storedData));
+                    setCurrentView('dashboard');
+                } else if (storedAuth === 'true') {
+                    setIsAuthenticated(true);
+                    setCurrentView('onboarding');
+                }
+            }, []);
+
+            const handleLogin = (password) => {
+                if (password === 'sahabatsca') {
+                    localStorage.setItem('stifin_auth', 'true');
+                    setIsAuthenticated(true);
+                    setCurrentView('onboarding');
+                    return true;
+                }
+                return false;
+            };
+
+            const handleLogout = () => {
+                localStorage.removeItem('stifin_auth');
+                localStorage.removeItem('stifin_user_data');
+                setIsAuthenticated(false);
+                setUserData(null);
+                setCurrentView('login');
+            };
+
+            const generateDashboard = (data) => {
+                localStorage.setItem('stifin_user_data', JSON.stringify(data));
+                setUserData(data);
+                setCurrentView('dashboard');
+            };
+
+            return (
+                <div className="min-h-screen relative overflow-x-hidden">
+                    <div className="fixed inset-0 z-0 bg-[#f8fafc] no-print">
+                        <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-200/30 rounded-full blur-3xl opacity-70"></div>
+                        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-indigo-200/30 rounded-full blur-3xl opacity-70"></div>
+                    </div>
+
+                    <div className="relative z-10">
+                        {currentView === 'login' && <Login onLogin={handleLogin} />}
+                        {currentView === 'onboarding' && <Onboarding onGenerate={generateDashboard} onLogout={handleLogout} />}
+                        {currentView === 'dashboard' && <Dashboard userData={userData} onLogout={handleLogout} onReset={() => setCurrentView('onboarding')} />}
+                    </div>
+                </div>
+            );
+        };
+
+        const Login = ({ onLogin }) => {
+            const [password, setPassword] = React.useState('');
+            const [showPassword, setShowPassword] = React.useState(false);
+            const [error, setError] = React.useState(false);
+
+            // Modal & Form User Akses State
+            const [showPinModal, setShowPinModal] = React.useState(false);
+            const [accessPin, setAccessPin] = React.useState('');
+            const [pinError, setPinError] = React.useState('');
+            const [showAccessForm, setShowAccessForm] = React.useState(false);
+            const [activeTab, setActiveTab] = React.useState('userForm');
+
+            // Passcodes CRUD State
+            const [passcodes, setPasscodes] = React.useState([]);
+            const [newPasscode, setNewPasscode] = React.useState('');
+            const [editingPasscodeIndex, setEditingPasscodeIndex] = React.useState(null);
+            const [editingPasscodeValue, setEditingPasscodeValue] = React.useState('');
+            const [passcodeMsg, setPasscodeMsg] = React.useState('');
+
+            // Access Form State Data
+            const [accessFormData, setAccessFormData] = React.useState({
+                nama: '',
+                whatsapp: '',
+                email: '',
+                stifinType: 'Si',
+                catatan: ''
+            });
+            const [isSubmitting, setIsSubmitting] = React.useState(false);
+            const [submitSuccess, setSubmitSuccess] = React.useState(false);
+            const [scriptUrl, setScriptUrl] = React.useState('');
+
+            // Load Passcodes & Script URL from LocalStorage
+            React.useEffect(() => {
+                const storedPasscodes = localStorage.getItem('stifin_passcodes');
+                if (storedPasscodes) {
+                    setPasscodes(JSON.parse(storedPasscodes));
+                } else {
+                    const defaultPasscodes = ['sahabatsca'];
+                    localStorage.setItem('stifin_passcodes', JSON.stringify(defaultPasscodes));
+                    setPasscodes(defaultPasscodes);
+                }
+
+                const storedScriptUrl = localStorage.getItem('stifin_script_url') || '';
+                setScriptUrl(storedScriptUrl);
+            }, []);
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                const validPasscodes = JSON.parse(localStorage.getItem('stifin_passcodes') || '["sahabatsca"]');
+                if (validPasscodes.includes(password.trim())) {
+                    onLogin(password.trim());
+                } else {
+                    setError(true);
+                    setTimeout(() => setError(false), 500);
+                }
+            };
+
+            const handleVerifyPin = (e) => {
+                e.preventDefault();
+                if (accessPin === '3308') {
+                    setPinError('');
+                    setShowPinModal(false);
+                    setShowAccessForm(true);
+                    setActiveTab('userForm');
+                    setAccessPin('');
+                } else {
+                    setPinError('PIN salah! Akses ditolak.');
+                }
+            };
+
+            // CRUD Handlers for Passcodes
+            const handleAddPasscode = (e) => {
+                e.preventDefault();
+                const val = newPasscode.trim();
+                if (!val) return;
+                if (passcodes.includes(val)) {
+                    setPasscodeMsg('Passcode sudah ada!');
+                    return;
+                }
+                const updated = [...passcodes, val];
+                setPasscodes(updated);
+                localStorage.setItem('stifin_passcodes', JSON.stringify(updated));
+                setNewPasscode('');
+                setPasscodeMsg('Passcode berhasil ditambahkan!');
+                setTimeout(() => setPasscodeMsg(''), 2500);
+            };
+
+            const handleStartEdit = (index) => {
+                setEditingPasscodeIndex(index);
+                setEditingPasscodeValue(passcodes[index]);
+            };
+
+            const handleSaveEdit = (index) => {
+                const val = editingPasscodeValue.trim();
+                if (!val) return;
+                const updated = [...passcodes];
+                updated[index] = val;
+                setPasscodes(updated);
+                localStorage.setItem('stifin_passcodes', JSON.stringify(updated));
+                setEditingPasscodeIndex(null);
+                setEditingPasscodeValue('');
+                setPasscodeMsg('Passcode berhasil diperbarui!');
+                setTimeout(() => setPasscodeMsg(''), 2500);
+            };
+
+            const handleDeletePasscode = (index) => {
+                if (passcodes.length <= 1) {
+                    setPasscodeMsg('Gagal hapus: Minimal harus ada 1 passcode aktif!');
+                    setTimeout(() => setPasscodeMsg(''), 2500);
+                    return;
+                }
+                const updated = passcodes.filter((_, i) => i !== index);
+                setPasscodes(updated);
+                localStorage.setItem('stifin_passcodes', JSON.stringify(updated));
+                setPasscodeMsg('Passcode berhasil dihapus!');
+                setTimeout(() => setPasscodeMsg(''), 2500);
+            };
+
+            const handleSaveScriptUrl = (val) => {
+                setScriptUrl(val);
+                localStorage.setItem('stifin_script_url', val);
+            };
+
+            const handleAccessFormSubmit = async (e) => {
+                e.preventDefault();
+                setIsSubmitting(true);
+
+                // Save submission to local storage backup
+                const existingSubmissions = JSON.parse(localStorage.getItem('stifin_user_access_submissions') || '[]');
+                const newSubmission = { ...accessFormData, timestamp: new Date().toISOString() };
+                existingSubmissions.push(newSubmission);
+                localStorage.setItem('stifin_user_access_submissions', JSON.stringify(existingSubmissions));
+
+                // Send data to Apps Script Web App URL if configured
+                if (scriptUrl.trim()) {
+                    try {
+                        await fetch(scriptUrl.trim(), {
+                            method: 'POST',
+                            mode: 'no-cors',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(newSubmission)
+                        });
+                    } catch (err) {
+                        console.error("Gagal mengirim ke Apps Script:", err);
+                    }
+                }
+
+                setIsSubmitting(false);
+                setSubmitSuccess(true);
+                setTimeout(() => {
+                    setSubmitSuccess(false);
+                    setShowAccessForm(false);
+                    setAccessFormData({ nama: '', whatsapp: '', email: '', stifinType: 'Si', catatan: '' });
+                }, 2000);
+            };
+
+            return (
+                <div className="min-h-screen flex items-center justify-center p-4">
+                    <div className={`glass-panel p-8 md:p-10 rounded-2xl w-full max-w-md border border-slate-200 shadow-2xl transition-transform ${error ? 'animate-shake border-red-500' : ''}`}>
+                        <div className="flex justify-center mb-6">
+                            <StifinLogo size={70} showText={false} />
+                        </div>
+                        <h1 className="text-2xl font-bold text-center text-slate-900 mb-1 tracking-tight">STIFIn Ultimate</h1>
+                        <p className="text-blue-600 font-semibold tracking-wider text-center text-xs uppercase mb-8">Character Academy Suite</p>
+
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-2">Access Passcode</label>
+                                <div className="relative glow-border rounded-xl transition-all">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                        <Icon name="Lock" size={18} />
+                                    </div>
+                                    <input
+                                        type={showPassword ? 'text' : 'password'}
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        className="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 pl-10 pr-12 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 transition-colors"
+                                        placeholder="Enter passcode..."
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                                    >
+                                        <Icon name={showPassword ? "EyeOff" : "Eye"} size={18} />
+                                    </button>
+                                </div>
+                                {error && <p className="text-red-500 text-xs mt-2 font-medium">Access Denied. Invalid passcode.</p>}
+                            </div>
+
+                            <button
+                                type="submit"
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl shadow-lg shadow-blue-600/20 transition-all hover:scale-[1.02] active:scale-95"
+                            >
+                                Authenticate
+                            </button>
+                        </form>
+
+                        {/* Link Khusus Form User Akses */}
+                        <div className="mt-6 pt-4 border-t border-slate-200 text-center flex justify-center">
+                            <button
+                                type="button"
+                                onClick={() => { setAccessPin(''); setPinError(''); setShowPinModal(true); }}
+                                className="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors inline-flex items-center justify-center gap-1.5"
+                            >
+                                <Icon name="User" size={14} /> Form User Akses & Pengaturan (PIN Khusus)
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Modal Input PIN (PIN: 3308) */}
+                    {showPinModal && (
+                        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+                            <div className="bg-white p-6 rounded-2xl w-full max-w-sm border border-slate-200 shadow-2xl">
+                                <div className="text-center mb-4">
+                                    <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-2">
+                                        <Icon name="Lock" size={24} />
+                                    </div>
+                                    <h3 className="text-lg font-bold text-slate-900">Verifikasi PIN Keamanan</h3>
+                                    <p className="text-xs text-slate-500 mt-1">Masukkan PIN khusus untuk mengelola user & passcode</p>
+                                </div>
+                                <form onSubmit={handleVerifyPin} className="space-y-4">
+                                    <input
+                                        type="password"
+                                        maxLength="4"
+                                        value={accessPin}
+                                        onChange={(e) => setAccessPin(e.target.value)}
+                                        className="w-full text-center text-2xl font-bold tracking-widest bg-slate-50 border border-slate-300 rounded-xl py-3 focus:outline-none focus:border-blue-500"
+                                        placeholder="••••"
+                                        autoFocus
+                                    />
+                                    {pinError && <p className="text-red-500 text-xs font-bold text-center">{pinError}</p>}
+                                    <div className="flex gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPinModal(false)}
+                                            className="w-1/2 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition-colors"
+                                        >
+                                            Batal
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            className="w-1/2 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm transition-colors"
+                                        >
+                                            Verifikasi
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Modal Form User Akses Multi-Tab */}
+                    {showAccessForm && (
+                        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+                            <div className="bg-white p-6 md:p-8 rounded-3xl w-full max-w-2xl border border-slate-200 shadow-2xl max-h-[90vh] overflow-y-auto">
+                                <div className="flex justify-between items-center mb-4 border-b pb-3">
+                                    <div>
+                                        <h3 className="text-xl font-black text-slate-900">Panel Kelola Akses & Sistem</h3>
+                                        <p className="text-xs text-slate-500">Form User Akses, Pengelolaan Passcode & Integrasi Spreadsheet</p>
+                                    </div>
+                                    <button onClick={() => setShowAccessForm(false)} className="text-slate-400 hover:text-slate-600">
+                                        ✕
+                                    </button>
+                                </div>
+
+                                {/* Tab Navigation */}
+                                <div className="flex border-b border-slate-200 mb-6 gap-2">
+                                    <button
+                                        onClick={() => setActiveTab('userForm')}
+                                        className={`pb-3 px-3 text-xs font-bold border-b-2 transition-colors flex items-center gap-1.5 ${activeTab === 'userForm' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+                                    >
+                                        <Icon name="User" size={14} /> Form User Akses
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTab('passcodeCrud')}
+                                        className={`pb-3 px-3 text-xs font-bold border-b-2 transition-colors flex items-center gap-1.5 ${activeTab === 'passcodeCrud' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+                                    >
+                                        <Icon name="Lock" size={14} /> Kelola Passcode (CRUD)
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTab('scriptConfig')}
+                                        className={`pb-3 px-3 text-xs font-bold border-b-2 transition-colors flex items-center gap-1.5 ${activeTab === 'scriptConfig' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+                                    >
+                                        ⚙️ Integrasi Spreadsheet
+                                    </button>
+                                </div>
+
+                                {/* TAB 1: FORM USER AKSES */}
+                                {activeTab === 'userForm' && (
+                                    <>
+                                        {submitSuccess ? (
+                                            <div className="p-6 bg-emerald-50 border border-emerald-200 rounded-2xl text-center space-y-2">
+                                                <div className="w-12 h-12 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto text-xl font-bold">✓</div>
+                                                <h4 className="text-emerald-900 font-bold">Data Akses Berhasil Terkirim!</h4>
+                                                <p className="text-emerald-700 text-xs">Data Anda telah otomatis tersimpan ke dalam Database Spreadsheet.</p>
+                                            </div>
+                                        ) : (
+                                            <form onSubmit={handleAccessFormSubmit} className="space-y-4">
+                                                <div>
+                                                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Nama Lengkap</label>
+                                                    <input
+                                                        type="text"
+                                                        required
+                                                        value={accessFormData.nama}
+                                                        onChange={(e) => setAccessFormData({...accessFormData, nama: e.target.value})}
+                                                        className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-sm focus:outline-none focus:border-blue-500"
+                                                        placeholder="Nama pengguna..."
+                                                    />
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div>
+                                                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">No. WhatsApp / HP</label>
+                                                        <input
+                                                            type="tel"
+                                                            required
+                                                            value={accessFormData.whatsapp}
+                                                            onChange={(e) => setAccessFormData({...accessFormData, whatsapp: e.target.value})}
+                                                            className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-sm focus:outline-none focus:border-blue-500"
+                                                            placeholder="08123456789..."
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Email</label>
+                                                        <input
+                                                            type="email"
+                                                            required
+                                                            value={accessFormData.email}
+                                                            onChange={(e) => setAccessFormData({...accessFormData, email: e.target.value})}
+                                                            className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-sm focus:outline-none focus:border-blue-500"
+                                                            placeholder="email@domain.com..."
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Mesin Kecerdasan (MK)</label>
+                                                    <select
+                                                        value={accessFormData.stifinType}
+                                                        onChange={(e) => setAccessFormData({...accessFormData, stifinType: e.target.value})}
+                                                        className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-sm focus:outline-none focus:border-blue-500"
+                                                    >
+                                                        {Object.keys(STIFIn_DATA.personalities).map(code => (
+                                                            <option key={code} value={code}>
+                                                                {code} - {STIFIn_DATA.personalities[code].name}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Catatan Tambahan / Kebutuhan Akses</label>
+                                                    <textarea
+                                                        rows="3"
+                                                        value={accessFormData.catatan}
+                                                        onChange={(e) => setAccessFormData({...accessFormData, catatan: e.target.value})}
+                                                        className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-sm focus:outline-none focus:border-blue-500"
+                                                        placeholder="Kebutuhan lisensi/akses..."
+                                                    ></textarea>
+                                                </div>
+
+                                                <div className="pt-2 flex gap-3">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowAccessForm(false)}
+                                                        className="w-1/3 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm"
+                                                    >
+                                                        Batal
+                                                    </button>
+                                                    <button
+                                                        type="submit"
+                                                        disabled={isSubmitting}
+                                                        className="w-2/3 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 text-white font-bold rounded-xl text-sm shadow-md"
+                                                    >
+                                                        {isSubmitting ? 'Mengirim Data...' : 'Kirim & Generate Database'}
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        )}
+                                    </>
+                                )}
+
+                                {/* TAB 2: KELOLA PASSCODE (CRUD) */}
+                                {activeTab === 'passcodeCrud' && (
+                                    <div className="space-y-6">
+                                        {passcodeMsg && (
+                                            <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs font-bold text-blue-700">
+                                                {passcodeMsg}
+                                            </div>
+                                        )}
+
+                                        {/* CREATE Passcode Form */}
+                                        <form onSubmit={handleAddPasscode} className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                                            <h4 className="text-xs font-black uppercase text-slate-700">Tambah Passcode Masuk Baru</h4>
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="text"
+                                                    value={newPasscode}
+                                                    onChange={(e) => setNewPasscode(e.target.value)}
+                                                    placeholder="Ketik passcode baru..."
+                                                    className="flex-1 bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                                                />
+                                                <button
+                                                    type="submit"
+                                                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition-colors"
+                                                >
+                                                    + Tambah Passcode
+                                                </button>
+                                            </div>
+                                        </form>
+
+                                        {/* READ, UPDATE, DELETE Passcodes List */}
+                                        <div>
+                                            <h4 className="text-xs font-black uppercase text-slate-700 mb-3">Daftar Passcode Aktif ({passcodes.length})</h4>
+                                            <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                                                {passcodes.map((code, idx) => (
+                                                    <div key={idx} className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl">
+                                                        {editingPasscodeIndex === idx ? (
+                                                            <div className="flex gap-2 w-full">
+                                                                <input
+                                                                    type="text"
+                                                                    value={editingPasscodeValue}
+                                                                    onChange={(e) => setEditingPasscodeValue(e.target.value)}
+                                                                    className="flex-1 bg-slate-50 border border-slate-300 rounded-lg px-3 py-1 text-sm font-mono focus:outline-none focus:border-blue-500"
+                                                                />
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleSaveEdit(idx)}
+                                                                    className="px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700"
+                                                                >
+                                                                    Simpan
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setEditingPasscodeIndex(null)}
+                                                                    className="px-3 py-1 bg-slate-200 text-slate-700 text-xs font-bold rounded-lg hover:bg-slate-300"
+                                                                >
+                                                                    Batal
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            <>
+                                                                <span className="font-mono text-sm font-bold text-slate-800 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">
+                                                                    {code}
+                                                                </span>
+                                                                <div className="flex items-center gap-2">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleStartEdit(idx)}
+                                                                        className="text-xs text-blue-600 hover:text-blue-800 font-bold px-2 py-1 rounded bg-blue-50 hover:bg-blue-100"
+                                                                    >
+                                                                        Edit
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleDeletePasscode(idx)}
+                                                                        className="text-xs text-red-600 hover:text-red-800 font-bold px-2 py-1 rounded bg-red-50 hover:bg-red-100"
+                                                                    >
+                                                                        Hapus
+                                                                    </button>
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* TAB 3: PENGATURAN INTEGRASI SPREADSHEET APPS SCRIPT */}
+                                {activeTab === 'scriptConfig' && (
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">URL Google Apps Script Web App</label>
+                                            <input
+                                                type="url"
+                                                value={scriptUrl}
+                                                onChange={(e) => handleSaveScriptUrl(e.target.value)}
+                                                placeholder="https://script.google.com/macros/s/.../exec"
+                                                className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-xs focus:outline-none focus:border-blue-500"
+                                            />
+                                            <p className="text-[11px] text-slate-500 mt-1">URL ini tersimpan otomatis di browser untuk pengiriman data form secara langsung ke Google Sheet.</p>
+                                        </div>
+
+                                        <div className="bg-slate-900 text-slate-100 p-4 rounded-xl text-xs space-y-2 font-mono overflow-x-auto">
+                                            <p className="text-amber-400 font-sans font-bold">// Salin kode Apps Script berikut ke Extensions &gt; Apps Script pada Spreadsheet Anda:</p>
+                                            <pre className="text-[11px] leading-relaxed">{`function doPost(e) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName("UserAkses");
+    if (!sheet) {
+      sheet = ss.insertSheet("UserAkses");
+      sheet.appendRow(["Timestamp", "Nama Lengkap", "WhatsApp", "Email", "Mesin Kecerdasan", "Catatan"]);
+      sheet.getRange(1, 1, 1, 6).setFontWeight("bold").setBackground("#3b82f6").setFontColor("#ffffff");
+    }
+    
+    var data = JSON.parse(e.postData.contents);
+    sheet.appendRow([
+      data.timestamp || new Date(),
+      data.nama || "",
+      data.whatsapp || "",
+      data.email || "",
+      data.stifinType || "",
+      data.catatan || ""
+    ]);
+    
+    return ContentService.createTextOutput(JSON.stringify({ status: "success" }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ status: "error", message: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}`}</pre>
+                                        </div>
+                                    </div>
+                                )}
+
+                            </div>
+                        </div>
+                    )}
+
+                </div>
+            );
+        };
+
+        const Onboarding = ({ onGenerate, onLogout }) => {
+            const [name, setName] = React.useState('');
+            const [bloodType, setBloodType] = React.useState('');
+            const [personality, setPersonality] = React.useState('');
+            const [error, setError] = React.useState('');
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (!name || !bloodType || !personality) {
+                    setError('Harap lengkapi semua data biometrik untuk melanjutkan.');
+                    return;
+                }
+                onGenerate({ name, bloodType, personality });
+            };
+
+            const personalitiesGroups = {
+                'Sensing (Merah)': { items: ['Si', 'Se'] },
+                'Thinking (Abu)': { items: ['Ti', 'Te'] },
+                'Intuiting (Biru)': { items: ['Ii', 'Ie'] },
+                'Feeling (Hijau)': { items: ['Fi', 'Fe'] },
+                'Insting (Kuning)': { items: ['In'] }
+            };
+
+            return (
+                <div className="min-h-screen flex flex-col p-4 animate-fade-in">
+                    <header className="flex justify-between items-center py-4 px-6 mb-8 max-w-4xl mx-auto w-full glass-panel rounded-2xl mt-4 border border-slate-200">
+                        <StifinLogo size={36} />
+                        <button onClick={onLogout} className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors text-sm font-medium">
+                            <Icon name="LogOut" size={16} /> Keluar
+                        </button>
+                    </header>
+
+                    <div className="flex-1 flex items-center justify-center">
+                        <div className="glass-panel p-8 md:p-12 rounded-3xl w-full max-w-2xl border-slate-200 shadow-2xl">
+                            <div className="text-center mb-10">
+                                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-50 border border-blue-100 mb-4 shadow-sm text-blue-600">
+                                    <Icon name="Brain" size={32} />
+                                </div>
+                                <h2 className="text-3xl font-extrabold text-slate-900 mb-2">Gerbang Jati Diri</h2>
+                                <p className="text-slate-600">Inisialisasi data biometrik Anda untuk menyusun dashboard analitik STIFIn.</p>
+                            </div>
+
+                            {error && (
+                                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+                                    {error}
+                                </div>
+                            )}
+
+                            <form onSubmit={handleSubmit} className="space-y-8">
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-2 uppercase tracking-wider">1. Nama Lengkap Subjek</label>
+                                    <div className="relative glow-border rounded-xl">
+                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                                            <Icon name="User" size={20} />
+                                        </div>
+                                        <input
+                                            type="text"
+                                            value={name}
+                                            onChange={(e) => setName(e.target.value)}
+                                            className="w-full bg-white border border-slate-300 rounded-xl py-4 pl-12 pr-4 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 transition-colors text-lg"
+                                            placeholder="Ketik nama Anda..."
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-3 uppercase tracking-wider">2. Golongan Darah</label>
+                                    <div className="grid grid-cols-4 gap-3">
+                                        {['O', 'A', 'B', 'AB'].map(type => (
+                                            <button
+                                                key={type}
+                                                type="button"
+                                                onClick={() => setBloodType(type)}
+                                                className={`py-3 rounded-xl border text-lg font-bold transition-all ${
+                                                    bloodType === type 
+                                                    ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/20' 
+                                                    : 'bg-white border-slate-200 text-slate-700 hover:border-slate-400 hover:bg-slate-50'
+                                                }`}
+                                            >
+                                                {type}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-2 uppercase tracking-wider">3. Hasil Tes Genetik STIFIn</label>
+                                    <div className="relative glow-border rounded-xl">
+                                        <select
+                                            value={personality}
+                                            onChange={(e) => setPersonality(e.target.value)}
+                                            className="w-full appearance-none bg-white border border-slate-300 rounded-xl py-4 pl-4 pr-12 text-slate-900 focus:outline-none focus:border-blue-500 transition-colors text-lg cursor-pointer"
+                                        >
+                                            <option value="" disabled>Pilih Mesin Kecerdasan...</option>
+                                            {Object.entries(personalitiesGroups).map(([groupName, groupData]) => (
+                                                <optgroup key={groupName} label={groupName}>
+                                                    {groupData.items.map(code => (
+                                                        <option key={code} value={code}>
+                                                            {code} - {STIFIn_DATA.personalities[code].name}
+                                                        </option>
+                                                    ))}
+                                                </optgroup>
+                                            ))}
+                                        </select>
+                                        <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-slate-400">
+                                            <Icon name="ChevronDown" size={20} />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-xl shadow-blue-600/20 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3 text-lg"
+                                >
+                                    <Icon name="BarChart3" size={24} />
+                                    GENERATE DASHBOARD
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const SectionHeader = ({ icon, title }) => (
+            <div className="flex items-center gap-3 mb-6 border-b border-slate-200 pb-4">
+                <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl border border-blue-100 shadow-sm">
+                    <Icon name={icon} size={22} />
+                </div>
+                <h3 className="text-xl font-extrabold text-slate-900 tracking-wide">{title}</h3>
+            </div>
+        );
+
+        const DataRow = ({ label, value }) => (
+            <div className="flex justify-between items-start py-3 border-b border-slate-100 last:border-0">
+                <span className="text-slate-500 text-xs font-semibold w-1/3 uppercase tracking-wider">{label}</span>
+                <span className="text-slate-900 text-sm font-bold w-2/3 text-right print-text-dark leading-snug">{value}</span>
+            </div>
+        );
+
+        const Dashboard = ({ userData, onLogout, onReset }) => {
+            const pData = STIFIn_DATA.personalities[userData.personality];
+            const bData = STIFIn_DATA.bloodTypes[userData.bloodType];
+            const mkInfo = STIFIn_DATA.kecerdasan5W[pData.mkGroup];
+            const [isGeneratingPdf, setIsGeneratingPdf] = React.useState(false);
+            const dashboardRef = React.useRef(null);
+
+            const handlePrint = () => {
+                setIsGeneratingPdf(true);
+                const element = dashboardRef.current;
+                const opt = {
+                    margin:       [8, 8, 8, 8],
+                    filename:     `STIFIn_Report_${userData.name.replace(/\s+/g, '_')}_${pData.code}.pdf`,
+                    image:        { type: 'jpeg', quality: 0.98 },
+                    html2canvas:  { scale: 2, useCORS: true, logging: false },
+                    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
+                };
+
+                html2pdf().from(element).set(opt).save().then(() => {
+                    setIsGeneratingPdf(false);
+                }).catch(err => {
+                    console.error(err);
+                    setIsGeneratingPdf(false);
+                });
+            };
+
+            return (
+                <div ref={dashboardRef} className="min-h-screen p-4 md:p-8 text-slate-800 relative bg-slate-50 pdf-container">
+                    <div className="max-w-6xl mx-auto space-y-6">
+                        
+                        {/* Control Navigation Header (No Print) */}
+                        <div className="flex justify-between items-center bg-white/90 backdrop-blur-md p-4 rounded-2xl border border-slate-200 no-print sticky top-4 z-50 shadow-md">
+                            <div className="flex items-center gap-4">
+                                <StifinLogo size={32} />
+                                <div className="h-6 w-px bg-slate-300 hidden sm:block"></div>
+                                <button onClick={onReset} className="text-sm font-semibold text-slate-600 hover:text-slate-900 transition-colors">
+                                    Edit Data
+                                </button>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <button
+                                    onClick={handlePrint}
+                                    disabled={isGeneratingPdf}
+                                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 text-white font-bold px-4 py-2.5 rounded-xl text-sm transition-colors shadow-md shadow-blue-500/20"
+                                >
+                                    <Icon name="Printer" size={16} /> {isGeneratingPdf ? 'MEMPROSES PDF...' : 'CETAK LANDSCAPE PDF'}
+                                </button>
+                                <button
+                                    onClick={onLogout}
+                                    className="flex items-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors"
+                                >
+                                    <Icon name="LogOut" size={16} /> Keluar
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Executive Banner */}
+                        <div className="p-6 md:p-8 rounded-3xl border-l-8 shadow-sm border border-slate-200 relative overflow-hidden bg-white pdf-card" style={{ borderLeftColor: pData.hex }}>
+                            <div className="flex flex-col md:flex-row justify-between md:items-center gap-6 relative z-10">
+                                <div>
+                                    <div className="flex items-center gap-3 mb-3">
+                                        <span className="bg-slate-900 text-white border border-slate-800 text-xs font-black px-4 py-1.5 rounded-full tracking-widest uppercase shadow-sm">
+                                            EXECUTIVE ANALYTICS REPORT
+                                        </span>
+                                        <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1.5">
+                                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> VERIFIED
+                                        </span>
+                                    </div>
+                                    <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight mb-2">
+                                        {userData.name}
+                                    </h1>
+                                    <p className="text-2xl font-extrabold tracking-wide" style={{ color: pData.hex }}>
+                                        {pData.code} - {pData.name}
+                                    </p>
+                                    <p className="text-slate-600 text-sm mt-2 max-w-3xl leading-relaxed font-medium">
+                                        Berdasarkan pemetaan genetik STIFIn, {pData.os}. Kecerdasan inti Anda adalah <strong className="text-slate-900 font-bold">{pData.quotient}</strong>.
+                                    </p>
+                                </div>
+
+                                <div className="flex flex-col items-start md:items-end gap-2 bg-slate-50 p-6 rounded-2xl border border-slate-200 shrink-0">
+                                    <span className="text-xs text-slate-500 uppercase tracking-widest font-black">Kecerdasan Dominan</span>
+                                    <span className="text-3xl md:text-4xl font-black" style={{ color: pData.hex }}>
+                                        {pData.quotient}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Response & Chemistry Cards */}
+                        <div className="pdf-grid-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="p-6 rounded-2xl border border-slate-200 bg-white shadow-sm pdf-card">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="p-2 bg-red-50 text-red-600 rounded-lg">
+                                        <Icon name="Activity" size={20} />
+                                    </div>
+                                    <h4 className="font-bold text-slate-900 uppercase tracking-wider text-xs">Tabiat Respons Awal (Gol. Darah {userData.bloodType})</h4>
+                                </div>
+                                <p className="text-slate-600 text-sm leading-relaxed font-medium">
+                                    {bData.desc}
+                                </p>
+                            </div>
+
+                            <div className="p-6 rounded-2xl border border-slate-200 bg-white shadow-sm pdf-card">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                                        <Icon name="Cpu" size={20} />
+                                    </div>
+                                    <h4 className="font-bold text-slate-900 uppercase tracking-wider text-xs">Sistem Kemudi Drive ({pData.driveDetails.drive})</h4>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3 text-xs">
+                                    <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-100"><span className="text-slate-400 font-semibold uppercase text-[10px] block">Sumber Stimuli</span> <strong className="text-slate-900 text-xs block">{pData.driveDetails.stimuli}</strong></div>
+                                    <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-100"><span className="text-slate-400 font-semibold uppercase text-[10px] block">Falsafah Hidup</span> <strong className="text-slate-900 text-xs block">{pData.driveDetails.falsafah}</strong></div>
+                                    <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-100"><span className="text-slate-400 font-semibold uppercase text-[10px] block">Motivasi</span> <strong className="text-slate-900 text-xs block">{pData.driveDetails.motivasi}</strong></div>
+                                    <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-100"><span className="text-slate-400 font-semibold uppercase text-[10px] block">Pemicu Belajar</span> <strong className="text-slate-900 text-xs block">{pData.belajarDeep.pemicu}</strong></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Hakikat Kecerdasan & 5W Concept */}
+                        <div className="p-6 md:p-8 rounded-3xl border border-slate-200 bg-white shadow-sm space-y-6 pdf-card">
+                            <SectionHeader icon="Compass" title={`Hakikat Penciptaan & Misi Kehidupan (Konsep 5W + 1H) - ${pData.mkGroup}`} />
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="bg-blue-50/80 p-5 rounded-2xl border border-blue-200 shadow-sm">
+                                    <span className="text-[10px] font-black text-blue-800 uppercase tracking-widest block mb-1">5W Framework & Belahan Otak</span>
+                                    <h5 className="font-extrabold text-slate-900 text-base">{pData.mkGroup} ({mkInfo?.w})</h5>
+                                    <p className="text-xs font-bold text-blue-700 mt-1">Dominansi Otak: {mkInfo?.otak}</p>
+                                </div>
+                                <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Karakter Utama</span>
+                                    <p className="text-xs font-bold text-slate-900 leading-relaxed">{mkInfo?.karakterUtama}</p>
+                                </div>
+                                <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Ciri Khas Genetik</span>
+                                    <p className="text-xs font-medium text-slate-700 leading-relaxed">{mkInfo?.ciriKhas}</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4 pt-2">
+                                <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span className="text-[10px] font-black text-blue-700 uppercase tracking-widest bg-blue-100 px-2.5 py-0.5 rounded-md">WHAT, WHERE, WHO</span>
+                                        <h5 className="text-xs font-black text-blue-800 uppercase tracking-widest">THE ESSENCE & ORIGIN</h5>
+                                    </div>
+                                    <p className="text-slate-700 text-sm leading-relaxed font-medium">{pData.essence}</p>
+                                </div>
+
+                                <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span className="text-[10px] font-black text-emerald-700 uppercase tracking-widest bg-emerald-100 px-2.5 py-0.5 rounded-md">WHY, WHEN</span>
+                                        <h5 className="text-xs font-black text-emerald-800 uppercase tracking-widest">THE DRIVE & MOMENTUM</h5>
+                                    </div>
+                                    <p className="text-slate-700 text-sm leading-relaxed font-medium">{pData.drive}</p>
+                                </div>
+
+                                <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span className="text-[10px] font-black text-amber-700 uppercase tracking-widest bg-amber-100 px-2.5 py-0.5 rounded-md">HOW</span>
+                                        <h5 className="text-xs font-black text-amber-800 uppercase tracking-widest">THE PATH TO SUCCESS</h5>
+                                    </div>
+                                    <p className="text-slate-700 text-sm leading-relaxed font-medium">{pData.path}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Visual 8 Dimensi Perilaku Kunci (Memo Sticky Notes Board) */}
+                        <div className="p-6 md:p-8 rounded-3xl border border-slate-200 bg-white shadow-sm space-y-6 pdf-card">
+                            <SectionHeader icon="Sparkles" title="Struktur Perilaku Kunci (8 Dimensi Perilaku)" />
+                            
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div className="sticky-note bg-amber-50 border border-amber-200 p-4 rounded-2xl relative overflow-hidden">
+                                    <div className="w-3 h-3 rounded-full bg-red-400 absolute top-3 right-3 shadow-sm"></div>
+                                    <span className="text-[10px] font-black uppercase text-amber-800 tracking-wider block mb-1">1. Sistem Operasi</span>
+                                    <p className="text-xs font-bold text-slate-900 leading-snug">{pData.perilaku8.os}</p>
+                                </div>
+
+                                <div className="sticky-note bg-blue-50 border border-blue-200 p-4 rounded-2xl relative overflow-hidden">
+                                    <div className="w-3 h-3 rounded-full bg-blue-400 absolute top-3 right-3 shadow-sm"></div>
+                                    <span className="text-[10px] font-black uppercase text-blue-800 tracking-wider block mb-1">2. Jenis Kecerdasan</span>
+                                    <p className="text-xs font-bold text-slate-900 leading-snug">{pData.perilaku8.kecerdasan}</p>
+                                </div>
+
+                                <div className="sticky-note bg-emerald-50 border border-emerald-200 p-4 rounded-2xl relative overflow-hidden">
+                                    <div className="w-3 h-3 rounded-full bg-emerald-400 absolute top-3 right-3 shadow-sm"></div>
+                                    <span className="text-[10px] font-black uppercase text-emerald-800 tracking-wider block mb-1">3. Peranan Utama</span>
+                                    <p className="text-xs font-bold text-slate-900 leading-snug">{pData.perilaku8.peranan}</p>
+                                </div>
+
+                                <div className="sticky-note bg-purple-50 border border-purple-200 p-4 rounded-2xl relative overflow-hidden">
+                                    <div className="w-3 h-3 rounded-full bg-purple-400 absolute top-3 right-3 shadow-sm"></div>
+                                    <span className="text-[10px] font-black uppercase text-purple-800 tracking-wider block mb-1">4. Kelebihan Inti</span>
+                                    <p className="text-xs font-bold text-slate-900 leading-snug">{pData.perilaku8.kelebihan}</p>
+                                </div>
+
+                                <div className="sticky-note bg-rose-50 border border-rose-200 p-4 rounded-2xl relative overflow-hidden">
+                                    <div className="w-3 h-3 rounded-full bg-rose-400 absolute top-3 right-3 shadow-sm"></div>
+                                    <span className="text-[10px] font-black uppercase text-rose-800 tracking-wider block mb-1">5. Target Utama</span>
+                                    <p className="text-xs font-bold text-slate-900 leading-snug">{pData.perilaku8.target}</p>
+                                </div>
+
+                                <div className="sticky-note bg-indigo-50 border border-indigo-200 p-4 rounded-2xl relative overflow-hidden">
+                                    <div className="w-3 h-3 rounded-full bg-indigo-400 absolute top-3 right-3 shadow-sm"></div>
+                                    <span className="text-[10px] font-black uppercase text-indigo-800 tracking-wider block mb-1">6. Harapan Diri</span>
+                                    <p className="text-xs font-bold text-slate-900 leading-snug">{pData.perilaku8.harapan}</p>
+                                </div>
+
+                                <div className="sticky-note bg-teal-50 border border-teal-200 p-4 rounded-2xl relative overflow-hidden">
+                                    <div className="w-3 h-3 rounded-full bg-teal-400 absolute top-3 right-3 shadow-sm"></div>
+                                    <span className="text-[10px] font-black uppercase text-teal-800 tracking-wider block mb-1">7. Arah Merek / Brand</span>
+                                    <p className="text-xs font-bold text-slate-900 leading-snug">{pData.perilaku8.brand}</p>
+                                </div>
+
+                                <div className="sticky-note bg-yellow-50 border border-yellow-200 p-4 rounded-2xl relative overflow-hidden">
+                                    <div className="w-3 h-3 rounded-full bg-yellow-500 absolute top-3 right-3 shadow-sm"></div>
+                                    <span className="text-[10px] font-black uppercase text-yellow-800 tracking-wider block mb-1">8. Tabiat thd. Uang</span>
+                                    <p className="text-xs font-bold text-slate-900 leading-snug">{pData.perilaku8.tabiatUang}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Report Cards Stack (2 Columns Grid in PDF Landscape) */}
+                        <div className="pdf-grid-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                            
+                            {/* Card 1: Topografi Otak */}
+                            <div className="p-6 rounded-3xl border border-slate-200 bg-white shadow-sm pdf-card">
+                                <SectionHeader icon="Globe" title="Topografi Otak & Sains" />
+                                <DataRow label="Belahan Otak" value={pData.topo.os} />
+                                <DataRow label="Lapisan Otak" value={pData.topo.lapisan} />
+                                <DataRow label="Cuaca Tubuh" value={pData.topo.cuaca} />
+                                <DataRow label="Arah Angin" value={pData.topo.angin} />
+                            </div>
+
+                            {/* Card 2: Metode Belajar */}
+                            <div className="p-6 rounded-3xl border border-slate-200 bg-white shadow-sm pdf-card">
+                                <SectionHeader icon="GraduationCap" title="Metode & Cara Belajar Efektif" />
+                                <DataRow label="Metode Optimal" value={pData.belajar.metode} />
+                                <DataRow label="Cara Belajar Deep" value={pData.belajarDeep.cara} />
+                                <DataRow label="Kebiasaan Utama" value={pData.belajar.kebiasaan} />
+                                <DataRow label="Media Belajar Ideal" value={pData.belajar.media} />
+                                <DataRow label="Peranan Diri" value={pData.belajar.peran} />
+                                <DataRow label="Panggung Utama" value={pData.belajar.panggung} />
+                            </div>
+
+                            {/* Card 3: Psikometrik */}
+                            <div className="p-6 rounded-3xl border border-slate-200 bg-white shadow-sm pdf-card">
+                                <SectionHeader icon="PieChart" title="Karakteristik Psikometrik" />
+                                <div className="space-y-4 pt-2">
+                                    {pData.psiko.traits.map(trait => (
+                                        <div key={trait.name}>
+                                            <div className="flex justify-between text-xs font-bold mb-1.5">
+                                                <span className="text-slate-700">{trait.name}</span>
+                                                <span className="text-blue-600 font-extrabold">{trait.val}%</span>
+                                            </div>
+                                            <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden border border-slate-200">
+                                                <div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-600" style={{ width: `${trait.val}%` }}></div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Card 4: Motivasi & Finansial */}
+                            <div className="p-6 rounded-3xl border border-slate-200 bg-white shadow-sm pdf-card">
+                                <SectionHeader icon="Coins" title="Motivasi, Finansial & Brand" />
+                                <DataRow label="Kemistri Alamiah" value={pData.motivasi.kemistri} />
+                                <DataRow label="Tabiat Finansial" value={pData.finansial.tabiat} />
+                                <DataRow label="Arah Merek / Branding" value={pData.finansial.brand} />
+                                <DataRow label="Kata Kunci Utama" value={pData.motivasi.keywords.join(' • ')} />
+                            </div>
+
+                            {/* Card 5: Pemetaan Karir */}
+                            <div className="p-6 rounded-3xl border border-slate-200 bg-white shadow-sm pdf-card">
+                                <SectionHeader icon="Briefcase" title="Pemetaan Karir & Karpet Merah" />
+                                <DataRow label="Industri Utama" value={pData.karir.utama} />
+                                <DataRow label="Profesi Spesifik" value={pData.karir.lainnya} />
+                                <DataRow label="Klu Keberhasilan" value={pData.peran.klu} />
+                                <DataRow label="Contoh Tokoh/Profesi" value={pData.motivasi.profesiContoh} />
+                            </div>
+
+                            {/* Card 6: Dinamika Sosial */}
+                            <div className="p-6 rounded-3xl border border-slate-200 bg-white shadow-sm pdf-card">
+                                <SectionHeader icon="Users" title="Dinamika Sosial (Teori Sirkulasi)" />
+                                <DataRow label="MENDUKUNG (Support)" value={pData.sosial.support} />
+                                <DataRow label="DIDUKUNG OLEH" value={pData.sosial.didukung} />
+                                <DataRow label="MENAKLUKKAN (Conquer)" value={pData.sosial.conquer} />
+                                <DataRow label="DITAKLUKKAN OLEH" value={pData.sosial.ditaklukkan} />
+                            </div>
+
+                        </div>
+
+                        {/* Card 7: Fisik, Jasmani & Organ Penyakit */}
+                        <div className="p-6 md:p-8 rounded-3xl border border-slate-200 bg-white shadow-sm space-y-6 pdf-card">
+                            <SectionHeader icon="HeartPulse" title="Fisik, Jasmani & Organ Penyakit (Gambar Dasar Karakter)" />
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider block mb-1">Konstitusi Fisik</span>
+                                    <p className="text-sm font-bold text-slate-900">{pData.fisik.konstitusi}</p>
+                                </div>
+                                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider block mb-1">Tipologi Fisik</span>
+                                    <p className="text-sm font-bold text-slate-900">{pData.gambaranDasar.tipologiFisik}</p>
+                                </div>
+                                <div className="bg-amber-50 p-4 rounded-2xl border border-amber-200">
+                                    <span className="text-[10px] font-black uppercase text-amber-800 tracking-wider block mb-1">Kalibrasi Belajar / Bekerja</span>
+                                    <p className="text-sm font-bold text-amber-900">{pData.gambaranDasar.kalibrasi}</p>
+                                </div>
+                                <div className="bg-rose-50 p-4 rounded-2xl border border-rose-200">
+                                    <span className="text-[10px] font-black uppercase text-rose-800 tracking-wider block mb-1">Organ Kerentanan & Penyakit</span>
+                                    <p className="text-sm font-bold text-rose-900">{pData.gambaranDasar.organPenyakit}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Card 8: 5 Trait Kepribadian Utama */}
+                        <div className="p-6 md:p-8 rounded-3xl border border-slate-200 bg-white shadow-sm space-y-6 pdf-card">
+                            <SectionHeader icon="Sparkles" title={`5 Trait Utama (${pData.name})`} />
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                                {pData.traitsList.map((item, idx) => (
+                                    <div key={idx} className="bg-slate-50 border border-slate-200 p-4 rounded-2xl space-y-2">
+                                        <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                                            <span className="text-xs font-black text-blue-600">0{idx + 1}</span>
+                                            <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 bg-blue-100 text-blue-800 rounded-md">Trait</span>
+                                        </div>
+                                        <h5 className="font-extrabold text-slate-900 text-sm leading-tight">{item.label}</h5>
+                                        <p className="text-[11px] font-bold text-slate-500 lowercase italic">{item.subtitle}</p>
+                                        <p className="text-xs text-slate-700 leading-relaxed pt-1">{item.desc}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Footer Disclaimer */}
+                        <div className="p-6 rounded-2xl border border-slate-200 bg-white shadow-sm text-center text-xs text-slate-500 space-y-2 no-print">
+                            <div className="flex justify-center mb-2">
+                                <StifinLogo size={28} />
+                            </div>
+                            <p className="font-bold tracking-wider text-slate-700 uppercase">DATA DIOLAH VIA STIFIN ULTIMATE ENGINE • CONFIDENTIAL EXECUTIVE REPORT</p>
+                            <p>© STIFIn Character Academy Suite. All Rights Reserved.</p>
+                        </div>
+
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

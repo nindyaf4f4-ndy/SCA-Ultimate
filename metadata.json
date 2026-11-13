@@ -1,0 +1,8 @@
+{
+  "name": "STIFIn Access Management & Analytics Suite",
+  "description": "Dashboard manajemen akses aplikasi STIFIn: generate password, generate link, kelola pengguna database, masa aktif akses, dan kontrol aktif/nonaktif.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
